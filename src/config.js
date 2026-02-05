@@ -1,11 +1,12 @@
 export const CONFIG = {
   symbol: 'BTCUSDT',
-  binanceWsUrl: 'wss://stream.binance.com:9443/ws/btcusdt@trade',
+  binanceWsUrl: 'wss://data-stream.binance.vision/ws/btcusdt@trade',
   binanceBaseUrl: '/binance-api',
   gammaBaseUrl: '/gamma-api',
   clobBaseUrl: '/clob-api',
 
-  pollIntervalMs: 1_000,
+  // Polling now only for TA indicators (klines), not CLOB prices
+  pollIntervalMs: 5_000,
   candleWindowMinutes: 15,
 
   vwapSlopeLookbackMinutes: 5,
@@ -18,9 +19,11 @@ export const CONFIG = {
 
   polymarket: {
     seriesId: '10192',
-    seriesSlug: 'btc-up-or-down-15m',
+    seriesSlug: 'btc-updown-15m',
     autoSelectLatest: true,
     liveDataWsUrl: 'wss://ws-live-data.polymarket.com',
+    clobWsUrl: 'wss://ws-subscriptions-clob.polymarket.com/ws/market',
+    clobPingIntervalMs: 10_000,
     upOutcomeLabel: 'Up',
     downOutcomeLabel: 'Down',
   },

@@ -20,7 +20,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/clob-api/, ''),
       },
       '/binance-api': {
-        target: 'https://api.binance.com',
+        target: 'https://data-api.binance.vision',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/binance-api/, ''),
       },

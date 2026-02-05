@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useBinanceStream } from './hooks/useBinanceStream.js';
 import { usePolymarketChainlinkStream } from './hooks/usePolymarketChainlinkStream.js';
 import { useChainlinkWssStream } from './hooks/useChainlinkWssStream.js';
+import { usePolymarketClobStream } from './hooks/usePolymarketClobStream.js';
 import { useMarketData } from './hooks/useMarketData.js';
 import CurrentPriceCard from './components/CurrentPriceCard.jsx';
 import TAIndicators from './components/TAIndicators.jsx';
@@ -25,7 +26,12 @@ export default function App() {
   const binance = useBinanceStream();
   const polymarketWs = usePolymarketChainlinkStream();
   const chainlinkWss = useChainlinkWssStream();
-  const { data, loading, error } = useMarketData();
+
+  // ═══ NEW: Real-time CLOB WebSocket ═══
+  const clobWs = usePolymarketClobStream();
+
+  // Pass CLOB WS data to useMarketData so it can use real-time prices
+  const { data, loading, error } = useMarketData({ clobWs });
 
   // Chainlink price priority: Polymarket WS > Chainlink WSS > Chainlink HTTP RPC
   const chainlinkResolved = useMemo(() => {
@@ -77,6 +83,8 @@ export default function App() {
           <span style={{ color: 'var(--text-dim)' }}>|</span>
           <StatusDot connected={chainlinkConnected} label={`Chainlink (${chainlinkResolved.source})`} />
           <span style={{ color: 'var(--text-dim)' }}>|</span>
+          <StatusDot connected={clobWs.connected} label={`CLOB ${clobWs.connected ? 'WS' : 'REST'}`} />
+          <span style={{ color: 'var(--text-dim)' }}>|</span>
           <StatusDot connected={!error} label="Data" />
         </div>
       </header>
@@ -123,7 +131,7 @@ export default function App() {
           <TAIndicators data={data} />
 
           {/* Row 3: Polymarket + Edge */}
-          <PolymarketPanel data={data} />
+          <PolymarketPanel data={data} clobWsConnected={clobWs.connected} />
           <EdgePanel data={data} />
 
           {/* Row 4: Session (full width) */}

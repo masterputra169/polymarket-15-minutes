@@ -29,13 +29,19 @@ function countVwapCrosses(closes, vwapSeries, lookback) {
   return crosses;
 }
 
-export function useMarketData() {
+/**
+ * useMarketData now accepts optional real-time CLOB WebSocket data.
+ * When clobWs prices are available, they override REST-polled CLOB prices.
+ * REST polling is kept for: klines (TA), Gamma market discovery, Chainlink RPC fallback.
+ */
+export function useMarketData({ clobWs } = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const intervalRef = useRef(null);
   const priceToBeatRef = useRef({ slug: null, value: null });
+  const tokenIdsNotifiedRef = useRef(false);
 
   const poll = useCallback(async () => {
     try {
@@ -47,6 +53,30 @@ export function useMarketData() {
         fetchPolymarketSnapshot(),
         fetchChainlinkBtcUsd(),
       ]);
+
+      // Notify CLOB WebSocket of token IDs when discovered
+      if (
+        poly.ok &&
+        poly.tokens &&
+        clobWs?.setTokenIds &&
+        !tokenIdsNotifiedRef.current
+      ) {
+        clobWs.setTokenIds(poly.tokens.upTokenId, poly.tokens.downTokenId);
+        tokenIdsNotifiedRef.current = true;
+      }
+
+      // If market slug changed, re-notify token IDs
+      const marketSlug = poly.ok ? String(poly.market?.slug ?? '') : '';
+      if (
+        marketSlug &&
+        priceToBeatRef.current.slug !== marketSlug &&
+        poly.ok &&
+        poly.tokens &&
+        clobWs?.setTokenIds
+      ) {
+        clobWs.setTokenIds(poly.tokens.upTokenId, poly.tokens.downTokenId);
+        tokenIdsNotifiedRef.current = true;
+      }
 
       const candles = klines1m;
       const closes = candles.map((c) => c.close);
@@ -123,9 +153,40 @@ export function useMarketData() {
         CONFIG.candleWindowMinutes
       );
 
+      // ═══ CLOB Prices: prefer WebSocket, fallback to REST ═══
+      const wsUpPrice = clobWs?.upPrice;
+      const wsDownPrice = clobWs?.downPrice;
+      const wsConnected = clobWs?.connected ?? false;
+
+      const marketUp =
+        wsConnected && wsUpPrice !== null
+          ? wsUpPrice
+          : poly.ok
+            ? poly.prices.up
+            : null;
+      const marketDown =
+        wsConnected && wsDownPrice !== null
+          ? wsDownPrice
+          : poly.ok
+            ? poly.prices.down
+            : null;
+
+      // ═══ Orderbook: prefer WebSocket, fallback to REST ═══
+      const wsOrderbook = clobWs?.orderbook;
+      const orderbookUp =
+        wsConnected && wsOrderbook?.up?.bestBid !== null
+          ? wsOrderbook.up
+          : poly.ok
+            ? poly.orderbook?.up
+            : null;
+      const orderbookDown =
+        wsConnected && wsOrderbook?.down?.bestBid !== null
+          ? wsOrderbook.down
+          : poly.ok
+            ? poly.orderbook?.down
+            : null;
+
       // Edge
-      const marketUp = poly.ok ? poly.prices.up : null;
-      const marketDown = poly.ok ? poly.prices.down : null;
       const edge = computeEdge({
         modelUp: timeAware.adjustedUp,
         modelDown: timeAware.adjustedDown,
@@ -173,8 +234,7 @@ export function useMarketData() {
       const vwapSlopeLabel =
         vwapSlope === null ? '-' : vwapSlope > 0 ? 'UP' : vwapSlope < 0 ? 'DOWN' : 'FLAT';
 
-      // Price to beat
-      const marketSlug = poly.ok ? String(poly.market?.slug ?? '') : '';
+      // Market slug tracking
       if (marketSlug && priceToBeatRef.current.slug !== marketSlug) {
         priceToBeatRef.current = { slug: marketSlug, value: null };
       }
@@ -195,6 +255,12 @@ export function useMarketData() {
         marketSlug,
         liquidity,
         settlementLeftMin,
+        // Orderbook
+        orderbookUp,
+        orderbookDown,
+        // CLOB source indicator
+        clobSource: wsConnected && wsUpPrice !== null ? 'WebSocket' : 'REST',
+        clobWsConnected: wsConnected,
         // TA
         vwapNow,
         vwapDist,
@@ -233,7 +299,7 @@ export function useMarketData() {
       setError(err.message);
       setLoading(false);
     }
-  }, []);
+  }, [clobWs]);
 
   useEffect(() => {
     poll();
