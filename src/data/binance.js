@@ -1,26 +1,42 @@
-import { CONFIG } from '../config.js';
-import { toNumber } from '../utils.js';
+/**
+ * Binance API data fetching.
+ * Fetches klines (candlestick data) and last price for BTCUSDT.
+ */
 
-export async function fetchKlines({ interval, limit }) {
+import { CONFIG } from '../config.js';
+
+/**
+ * Fetch klines (candlestick data) from Binance.
+ * @param {Object} opts
+ * @param {string} opts.interval - candle interval ('1m', '5m', etc.)
+ * @param {number} opts.limit - number of candles
+ * @returns {Array} candles [{openTime, open, high, low, close, volume, closeTime}, ...]
+ */
+export async function fetchKlines({ interval = '1m', limit = 240 } = {}) {
   const url = `${CONFIG.binanceBaseUrl}/api/v3/klines?symbol=${CONFIG.symbol}&interval=${interval}&limit=${limit}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Binance klines error: ${res.status}`);
-  const data = await res.json();
-  return data.map((k) => ({
-    openTime: Number(k[0]),
-    open: toNumber(k[1]),
-    high: toNumber(k[2]),
-    low: toNumber(k[3]),
-    close: toNumber(k[4]),
-    volume: toNumber(k[5]),
-    closeTime: Number(k[6]),
+  if (!res.ok) throw new Error(`Binance klines HTTP ${res.status}`);
+  const raw = await res.json();
+
+  return raw.map((k) => ({
+    openTime: k[0],
+    open: parseFloat(k[1]),
+    high: parseFloat(k[2]),
+    low: parseFloat(k[3]),
+    close: parseFloat(k[4]),
+    volume: parseFloat(k[5]),
+    closeTime: k[6],
   }));
 }
 
+/**
+ * Fetch last price from Binance.
+ * @returns {number} last price
+ */
 export async function fetchLastPrice() {
   const url = `${CONFIG.binanceBaseUrl}/api/v3/ticker/price?symbol=${CONFIG.symbol}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Binance price error: ${res.status}`);
+  if (!res.ok) throw new Error(`Binance price HTTP ${res.status}`);
   const data = await res.json();
-  return toNumber(data.price);
+  return parseFloat(data.price);
 }

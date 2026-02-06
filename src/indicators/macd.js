@@ -1,41 +1,49 @@
-function ema(values, period) {
-  if (!Array.isArray(values) || values.length < period) return null;
+/**
+ * MACD (Moving Average Convergence Divergence) indicator.
+ * Reworked: 6/13/5 for 15-minute market windows on 1m candles.
+ * Fast EMA responds in ~6 min, slow in ~13 min — both within market window.
+ */
+
+function ema(data, period) {
+  if (!data || data.length === 0) return [];
   const k = 2 / (period + 1);
-  let prev = values[0];
-  for (let i = 1; i < values.length; i += 1) {
-    prev = values[i] * k + prev * (1 - k);
+  const result = [data[0]];
+  for (let i = 1; i < data.length; i++) {
+    result.push(data[i] * k + result[i - 1] * (1 - k));
   }
-  return prev;
+  return result;
 }
 
-export function computeMacd(closes, fast, slow, signal) {
-  if (!Array.isArray(closes) || closes.length < slow + signal) return null;
-  const fastEma = ema(closes, fast);
-  const slowEma = ema(closes, slow);
-  if (fastEma === null || slowEma === null) return null;
-  const macdLine = fastEma - slowEma;
+/**
+ * Compute MACD values.
+ * @param {number[]} closes
+ * @param {number} fast - fast EMA period (default 6)
+ * @param {number} slow - slow EMA period (default 13)
+ * @param {number} signal - signal period (default 5)
+ * @returns {{ line: number, signal: number, hist: number, histDelta: number|null } | null}
+ */
+export function computeMacd(closes, fast = 6, slow = 13, signal = 5) {
+  if (!closes || closes.length < slow + signal) return null;
 
-  const macdSeries = [];
-  for (let i = 0; i < closes.length; i += 1) {
-    const sub = closes.slice(0, i + 1);
-    const f = ema(sub, fast);
-    const s = ema(sub, slow);
-    if (f === null || s === null) continue;
-    macdSeries.push(f - s);
-  }
+  const emaFast = ema(closes, fast);
+  const emaSlow = ema(closes, slow);
 
-  const signalLine = ema(macdSeries, signal);
-  if (signalLine === null) return null;
-  const hist = macdLine - signalLine;
-  const prevHist =
-    macdSeries.length >= signal + 1
-      ? macdSeries[macdSeries.length - 2] - ema(macdSeries.slice(0, macdSeries.length - 1), signal)
-      : null;
+  // MACD line = fastEMA - slowEMA
+  const macdLine = emaFast.map((v, i) => v - emaSlow[i]);
 
-  return {
-    macd: macdLine,
-    signal: signalLine,
-    hist,
-    histDelta: prevHist === null ? null : hist - prevHist,
-  };
+  // Signal line = EMA of MACD line
+  const signalLine = ema(macdLine, signal);
+
+  const lastIdx = closes.length - 1;
+  const prevIdx = lastIdx - 1;
+
+  const line = macdLine[lastIdx];
+  const sig = signalLine[lastIdx];
+  const hist = line - sig;
+
+  // Histogram delta (acceleration)
+  const prevHist = prevIdx >= 0 ? macdLine[prevIdx] - signalLine[prevIdx] : null;
+  const histDelta = prevHist !== null ? hist - prevHist : null;
+
+  return { line, signal: sig, hist, histDelta };
 }

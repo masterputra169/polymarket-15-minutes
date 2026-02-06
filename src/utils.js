@@ -103,3 +103,88 @@ function toNumber(x) {
 }
 
 export { toNumber };
+
+/**
+ * ═══ Parse "Price to Beat" from Polymarket market data ═══
+ * 
+ * Strategy (in priority order):
+ * 1. Parse from market question/description (e.g. "$66,500.00")
+ * 2. Use market's custom fields (startPrice, referencePrice, etc.)
+ * 3. Fall back to klines open price at market start time
+ */
+export function parsePriceToBeat(text) {
+  if (!text || typeof text !== 'string') return null;
+
+  // Match dollar amounts like $66,500.00 or $100,000 or $67123.45
+  const matches = text.match(/\$[\d,]+(?:\.\d+)?/g);
+  if (!matches || matches.length === 0) return null;
+
+  const raw = matches[0].replace(/[$,]/g, '');
+  const num = Number(raw);
+  return Number.isFinite(num) && num > 0 ? num : null;
+}
+
+/**
+ * Extract Price to Beat from Polymarket market object.
+ * Tries multiple fields and strategies.
+ */
+export function extractPriceToBeat(market, klines) {
+  if (!market) return null;
+
+  // 1. Try parsing from question text
+  const fromQuestion = parsePriceToBeat(market.question);
+  if (fromQuestion !== null) return fromQuestion;
+
+  // 2. Try parsing from title
+  const fromTitle = parsePriceToBeat(market.title);
+  if (fromTitle !== null) return fromTitle;
+
+  // 3. Try parsing from description
+  const fromDesc = parsePriceToBeat(market.description);
+  if (fromDesc !== null) return fromDesc;
+
+  // 4. Try dedicated fields that Polymarket might use
+  const directFields = [
+    market.startPrice,
+    market.referencePrice,
+    market.strikePrice,
+    market.openPrice,
+    market.priceToBeat,
+    market.targetPrice,
+  ];
+  for (const val of directFields) {
+    const n = Number(val);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+
+  // 5. Try parsing from any string field that contains a BTC-like price
+  const allStrFields = [market.slug, market.groupItemTitle];
+  for (const field of allStrFields) {
+    const parsed = parsePriceToBeat(String(field ?? ''));
+    if (parsed !== null && parsed > 10000) return parsed; // sanity check: BTC > $10k
+  }
+
+  // 6. Fall back to klines: find the candle at market start time, use its open price
+  const startTime = market.eventStartTime ?? market.startTime ?? market.startDate;
+  if (startTime && Array.isArray(klines) && klines.length > 0) {
+    const startMs = new Date(startTime).getTime();
+    if (Number.isFinite(startMs)) {
+      // Find closest 1-min candle to market start
+      let best = null;
+      let bestDiff = Infinity;
+      for (const c of klines) {
+        const diff = Math.abs(c.openTime - startMs);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          best = c;
+        }
+      }
+      // Only use if within 2 minutes of start time
+      if (best && bestDiff < 120_000 && best.open > 0) {
+        return best.open;
+      }
+    }
+  }
+
+  return null;
+}

@@ -27,7 +27,7 @@ export default function App() {
   const polymarketWs = usePolymarketChainlinkStream();
   const chainlinkWss = useChainlinkWssStream();
 
-  // ═══ NEW: Real-time CLOB WebSocket ═══
+  // ═══ Real-time CLOB WebSocket ═══
   const clobWs = usePolymarketClobStream();
 
   // Pass CLOB WS data to useMarketData so it can use real-time prices
@@ -124,6 +124,7 @@ export default function App() {
             binancePrevPrice={binance.prevPrice}
             binanceConnected={binance.connected}
             timeLeftMin={data.timeLeftMin}
+            priceToBeat={data.priceToBeat}
           />
 
           {/* Row 2: Prediction + TA */}

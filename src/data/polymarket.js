@@ -92,7 +92,12 @@ export function summarizeOrderBook(book, depthLevels = 5) {
   return { bestBid, bestAsk, spread, bidLiquidity, askLiquidity };
 }
 
-export async function fetchPolymarketSnapshot() {
+/**
+ * ═══ FIX: Added `skipClob` option ═══
+ * When CLOB WebSocket is connected, we skip REST calls for prices & orderbooks.
+ * This eliminates 4 HTTP requests per poll cycle (2 prices + 2 orderbooks).
+ */
+export async function fetchPolymarketSnapshot({ skipClob = false } = {}) {
   try {
     const events = await fetchLiveEventsBySeriesId({
       seriesId: CONFIG.polymarket.seriesId,
@@ -138,6 +143,20 @@ export async function fetchPolymarketSnapshot() {
 
     const gammaYes = upIndex >= 0 ? Number(outcomePrices[upIndex]) : null;
     const gammaNo = downIndex >= 0 ? Number(outcomePrices[downIndex]) : null;
+
+    // ═══ FIX: Skip CLOB REST calls when WebSocket provides prices ═══
+    if (skipClob) {
+      return {
+        ok: true,
+        market,
+        tokens: { upTokenId, downTokenId },
+        prices: { up: gammaYes, down: gammaNo },  // Use Gamma prices as fallback
+        orderbook: {
+          up: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: null, askLiquidity: null },
+          down: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: null, askLiquidity: null },
+        },
+      };
+    }
 
     let upBuy = null;
     let downBuy = null;

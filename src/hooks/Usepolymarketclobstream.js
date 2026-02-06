@@ -5,9 +5,8 @@ import { toNumber } from '../utils.js';
 /**
  * Real-time Polymarket CLOB WebSocket stream.
  * Connects to wss://ws-subscriptions-clob.polymarket.com/ws/market
- * and subscribes to orderbook updates, price changes, and last trade prices.
  *
- * No authentication required for market channel.
+ * ═══ FIX: Clear stale prices when market switches (token IDs change) ═══
  */
 
 function parsePriceLevel(level) {
@@ -54,16 +53,37 @@ export function usePolymarketClobStream() {
   const tokenIdsRef = useRef({ up: null, down: null });
   const subscribedRef = useRef(false);
 
+  // ═══ FIX: Clear all stale data from previous market ═══
+  const clearPrices = useCallback(() => {
+    setUpPrice(null);
+    setDownPrice(null);
+    setUpPrevPrice(null);
+    setDownPrevPrice(null);
+    setOrderbook({
+      up: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: 0, askLiquidity: 0 },
+      down: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: 0, askLiquidity: 0 },
+    });
+  }, []);
+
   // Set token IDs from outside (called when market is discovered via REST)
   const setTokenIds = useCallback((upTokenId, downTokenId) => {
     const changed =
       tokenIdsRef.current.up !== upTokenId || tokenIdsRef.current.down !== downTokenId;
-    tokenIdsRef.current = { up: upTokenId, down: downTokenId };
 
-    if (changed && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      subscribe(wsRef.current);
+    if (changed) {
+      console.log('[CLOB WS] 🔄 Token IDs changed, clearing stale prices & re-subscribing');
+
+      // ═══ FIX: Clear stale prices from old market ═══
+      clearPrices();
+
+      tokenIdsRef.current = { up: upTokenId, down: downTokenId };
+      subscribedRef.current = false;
+
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        subscribe(wsRef.current);
+      }
     }
-  }, []);
+  }, [clearPrices]);
 
   function subscribe(ws) {
     const { up, down } = tokenIdsRef.current;
@@ -78,6 +98,7 @@ export function usePolymarketClobStream() {
         })
       );
       subscribedRef.current = true;
+      console.log('[CLOB WS] ✅ Subscribed to', assetIds.length, 'tokens');
     } catch {
       /* ignore */
     }

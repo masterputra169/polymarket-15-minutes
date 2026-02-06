@@ -10,6 +10,7 @@ export default function CurrentPriceCard({
   binancePrevPrice,
   binanceConnected,
   timeLeftMin,
+  priceToBeat,
 }) {
   const priceRef = useRef(null);
   const prevRef = useRef(chainlinkPrice);
@@ -48,6 +49,17 @@ export default function CurrentPriceCard({
     const diffPct = (diffUsd / chainlinkPrice) * 100;
     const sign = diffUsd > 0 ? '+' : diffUsd < 0 ? '-' : '';
     diffText = `${sign}$${Math.abs(diffUsd).toFixed(2)} (${sign}${Math.abs(diffPct).toFixed(2)}%)`;
+  }
+
+  // ═══ NEW: Price to Beat vs Current Price comparison ═══
+  let ptbDiffText = '';
+  let ptbColor = '';
+  if (priceToBeat !== null && displayPrice !== null) {
+    const diff = displayPrice - priceToBeat;
+    const diffPct = (diff / priceToBeat) * 100;
+    const sign = diff > 0 ? '+' : diff < 0 ? '-' : '';
+    ptbDiffText = `${sign}$${Math.abs(diff).toFixed(2)} (${sign}${Math.abs(diffPct).toFixed(3)}%)`;
+    ptbColor = diff > 0 ? 'c-green' : diff < 0 ? 'c-red' : '';
   }
 
   const timeColor =
@@ -144,6 +156,106 @@ export default function CurrentPriceCard({
           )}
         </div>
       </div>
+
+      {/* ═══ NEW: Price to Beat Row ═══ */}
+      {priceToBeat !== null && (
+        <div
+          style={{
+            marginTop: 14,
+            paddingTop: 12,
+            borderTop: '1px solid var(--border-dim)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 10,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span
+              style={{
+                fontSize: '0.68rem',
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              🎯 Price to Beat
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: '1.15rem',
+                color: 'var(--accent-cyan)',
+              }}
+            >
+              ${formatNumber(priceToBeat, 2)}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Distance from current price */}
+            {ptbDiffText && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span
+                  style={{
+                    fontSize: '0.65rem',
+                    color: 'var(--text-dim)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Distance
+                </span>
+                <span
+                  className={ptbColor}
+                  style={{ fontWeight: 600, fontSize: '0.82rem' }}
+                >
+                  {ptbDiffText}
+                </span>
+              </div>
+            )}
+
+            {/* Direction indicator */}
+            {displayPrice !== null && (
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  background:
+                    displayPrice > priceToBeat
+                      ? 'var(--green-bg)'
+                      : displayPrice < priceToBeat
+                        ? 'var(--red-bg)'
+                        : 'rgba(255,171,0,0.06)',
+                  color:
+                    displayPrice > priceToBeat
+                      ? 'var(--green-bright)'
+                      : displayPrice < priceToBeat
+                        ? 'var(--red-bright)'
+                        : 'var(--yellow-bright)',
+                  border: `1px solid ${
+                    displayPrice > priceToBeat
+                      ? 'rgba(0,230,118,0.2)'
+                      : displayPrice < priceToBeat
+                        ? 'rgba(255,82,82,0.2)'
+                        : 'rgba(255,171,0,0.2)'
+                  }`,
+                }}
+              >
+                {displayPrice > priceToBeat
+                  ? '↑ ABOVE'
+                  : displayPrice < priceToBeat
+                    ? '↓ BELOW'
+                    : '= EXACT'}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
