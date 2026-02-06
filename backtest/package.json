@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "private": true,
+  "name": "btc-ml-pipeline",
+  "description": "ML training pipeline for BTC 15-min prediction",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0"
+  }
+}

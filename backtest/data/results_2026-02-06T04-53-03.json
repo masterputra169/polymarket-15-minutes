@@ -1,0 +1,4236 @@
+{
+  "summary": {
+    "total": 14399,
+    "correct": 10556,
+    "accuracy": 0.7331064657267866,
+    "enterTotal": 10268,
+    "enterCorrect": 7981,
+    "enterAccuracy": 0.7772691858200234
+  },
+  "byPhase": {
+    "8min": {
+      "total": 2880,
+      "correct": 2056
+    },
+    "5min": {
+      "total": 2880,
+      "correct": 2185
+    },
+    "3min": {
+      "total": 2880,
+      "correct": 2216
+    },
+    "1min": {
+      "total": 2880,
+      "correct": 2258
+    },
+    "12min": {
+      "total": 2879,
+      "correct": 1841
+    }
+  },
+  "bySession": {
+    "Asia": {
+      "total": 4799,
+      "correct": 3555
+    },
+    "Europe": {
+      "total": 3000,
+      "correct": 2148
+    },
+    "EU/US Overlap": {
+      "total": 1800,
+      "correct": 1306
+    },
+    "US": {
+      "total": 3600,
+      "correct": 2639
+    },
+    "Off-hours": {
+      "total": 1200,
+      "correct": 908
+    }
+  },
+  "byRegime": {
+    "moderate": {
+      "total": 14399,
+      "correct": 10556
+    }
+  },
+  "byConfidence": {
+    "low": {
+      "total": 4154,
+      "correct": 2470
+    },
+    "medium": {
+      "total": 7238,
+      "correct": 5756
+    },
+    "high": {
+      "total": 3007,
+      "correct": 2330
+    }
+  },
+  "byRecAction": {
+    "ENTER": {
+      "total": 10268,
+      "correct": 7981
+    },
+    "WAIT": {
+      "total": 4131,
+      "correct": 2575
+    }
+  },
+  "samplePredictions": [
+    {
+      "minutesLeft": 8,
+      "price": 92695.01,
+      "priceToBeat": 92746.93,
+      "distancePct": "-0.0560",
+      "rawUp": 0.28846153846153844,
+      "adjustedUp": 0.34551415044726086,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.3089716991054783,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.15448584955273914,
+      "edgeDown": 0.15448584955273914,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN DOWN",
+          "weight": 1.5,
+          "distPct": -0.0005598028959017648
+        },
+        "momentum": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "macdHist": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "macdLine": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 5
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92678.33,
+      "priceToBeat": 92746.93,
+      "distancePct": "-0.0740",
+      "rawUp": 0.09666666666666662,
+      "adjustedUp": 0.26713539142685094,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.4657292171462981,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.23286460857314906,
+      "edgeDown": 0.23286460857314906,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN DOWN",
+          "weight": 1.5,
+          "distPct": -0.0007396471236297662
+        },
+        "momentum": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "macdLine": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 8
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92688.86,
+      "priceToBeat": 92746.93,
+      "distancePct": "-0.0626",
+      "rawUp": 0.5366666666666666,
+      "adjustedUp": 0.5163978318349984,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "UP",
+      "actualSide": "DOWN",
+      "correct": false,
+      "confidence": 0.032795663669996866,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": 0.016397831834998433,
+      "edgeDown": -0.016397831834998433,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN DOWN",
+          "weight": 1.5,
+          "distPct": -0.0006261123683553993
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "macdHist": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "macdLine": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92695.01,
+      "priceToBeat": 92746.93,
+      "distancePct": "-0.0560",
+      "rawUp": 0.4676470588235294,
+      "adjustedUp": 0.48867647058823527,
+      "timeDecay": 0.35,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.022647058823529465,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": -0.011323529411764732,
+      "edgeDown": 0.011323529411764732,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN DOWN",
+          "weight": 1.5,
+          "distPct": -0.0005598028959017648
+        },
+        "momentum": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "macdLine": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 3
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92657.04,
+      "priceToBeat": 92670.3,
+      "distancePct": "-0.0143",
+      "rawUp": 0.04999999999999999,
+      "adjustedUp": 0.09750776405003786,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "DOWN",
+      "actualSide": "UP",
+      "correct": false,
+      "confidence": 0.8049844718999243,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.40249223594996214,
+      "edgeDown": 0.4024922359499621,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.00014308791489840125
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "macdLine": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 4
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92629.25,
+      "priceToBeat": 92670.3,
+      "distancePct": "-0.0443",
+      "rawUp": 0.03799999999999998,
+      "adjustedUp": 0.1626029045768177,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "DOWN",
+      "actualSide": "UP",
+      "correct": false,
+      "confidence": 0.6747941908463646,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.3373970954231823,
+      "edgeDown": 0.3373970954231823,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN DOWN",
+          "weight": 1.5,
+          "distPct": -0.0004429682433314979
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 8
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92668.4,
+      "priceToBeat": 92670.3,
+      "distancePct": "-0.0021",
+      "rawUp": 0.3730769230769231,
+      "adjustedUp": 0.426720927372086,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "DOWN",
+      "actualSide": "UP",
+      "correct": false,
+      "confidence": 0.146558145255828,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": -0.073279072627914,
+      "edgeDown": 0.073279072627914,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.000020502793235899
+        },
+        "momentum": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 3
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92658.75,
+      "priceToBeat": 92670.3,
+      "distancePct": "-0.0125",
+      "rawUp": 0.2735294117647059,
+      "adjustedUp": 0.39871927396030366,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "DOWN",
+      "actualSide": "UP",
+      "correct": false,
+      "confidence": 0.2025614520793927,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.10128072603969634,
+      "edgeDown": 0.1012807260396964,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.00012463540098610785
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92730.2,
+      "priceToBeat": 92670.3,
+      "distancePct": "0.0646",
+      "rawUp": 0.9741379310344828,
+      "adjustedUp": 0.665948275862069,
+      "timeDecay": 0.35,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.3318965517241379,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.16594827586206895,
+      "edgeDown": -0.16594827586206895,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.0006463775341182037
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 2
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92794,
+      "priceToBeat": 92748.82,
+      "distancePct": "0.0487",
+      "rawUp": 0.9741379310344828,
+      "adjustedUp": 0.9240818578016843,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "UP",
+      "actualSide": "DOWN",
+      "correct": false,
+      "confidence": 0.8481637156033686,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.4240818578016843,
+      "edgeDown": -0.4240818578016843,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.0004871221003134381
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 6
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92753.56,
+      "priceToBeat": 92748.82,
+      "distancePct": "0.0051",
+      "rawUp": 0.35,
+      "adjustedUp": 0.3904554884989668,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.21908902300206645,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.10954451150103323,
+      "edgeDown": 0.10954451150103317,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": 0.00005110577148033459
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92743.22,
+      "priceToBeat": 92748.82,
+      "distancePct": "-0.0060",
+      "rawUp": 0.6269230769230769,
+      "adjustedUp": 0.573279072627914,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "UP",
+      "actualSide": "DOWN",
+      "correct": false,
+      "confidence": 0.146558145255828,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": 0.073279072627914,
+      "edgeDown": -0.073279072627914,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.00006037812664361466
+        },
+        "momentum": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 4
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92724,
+      "priceToBeat": 92748.82,
+      "distancePct": "-0.0268",
+      "rawUp": 0.3625,
+      "adjustedUp": 0.43850813061875576,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.12298373876248847,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": -0.061491869381244235,
+      "edgeDown": 0.06149186938124429,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.0002676044827309607
+        },
+        "momentum": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92718.51,
+      "priceToBeat": 92748.82,
+      "distancePct": "-0.0327",
+      "rawUp": 0.3382352941176471,
+      "adjustedUp": 0.4433823529411765,
+      "timeDecay": 0.35,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.11323529411764699,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": -0.056617647058823495,
+      "edgeDown": 0.05661764705882355,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.00032679661045835647
+        },
+        "momentum": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 3
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92832.68,
+      "priceToBeat": 92718.52,
+      "distancePct": "0.1231",
+      "rawUp": 0.8666666666666667,
+      "adjustedUp": 0.8279566366999691,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.6559132733999382,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.3279566366999691,
+      "edgeDown": -0.3279566366999691,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0012312534755730456
+        },
+        "momentum": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 3
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92828,
+      "priceToBeat": 92718.52,
+      "distancePct": "0.1181",
+      "rawUp": 0.5611111111111111,
+      "adjustedUp": 0.5446292454263468,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.08925849085269366,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": 0.04462924542634683,
+      "edgeDown": -0.04462924542634683,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0011807781228604158
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92796.07,
+      "priceToBeat": 92718.52,
+      "distancePct": "0.0836",
+      "rawUp": 0.6222222222222222,
+      "adjustedUp": 0.5705650329009543,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.14113006580190857,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": 0.07056503290095428,
+      "edgeDown": -0.07056503290095428,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.0008364024792458174
+        },
+        "momentum": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 4
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92803.65,
+      "priceToBeat": 92718.52,
+      "distancePct": "0.0918",
+      "rawUp": 0.5868421052631579,
+      "adjustedUp": 0.5388369701355227,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.07767394027104535,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": 0.038836970135522675,
+      "edgeDown": -0.038836970135522675,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.0009181552941094196
+        },
+        "momentum": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 2
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92767.46,
+      "priceToBeat": 92718.52,
+      "distancePct": "0.0528",
+      "rawUp": 0.23518518518518516,
+      "adjustedUp": 0.4073148148148148,
+      "timeDecay": 0.35,
+      "predictedSide": "DOWN",
+      "actualSide": "UP",
+      "correct": false,
+      "confidence": 0.1853703703703704,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": -0.0926851851851852,
+      "edgeDown": 0.0926851851851852,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.0005278341371281846
+        },
+        "momentum": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 2
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92646.21,
+      "priceToBeat": 92750.01,
+      "distancePct": "-0.1119",
+      "rawUp": 0.06578947368421051,
+      "adjustedUp": 0.11163029864477336,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.7767394027104533,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.38836970135522664,
+      "edgeDown": 0.38836970135522664,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "DOWN",
+          "weight": 3,
+          "distPct": -0.0011191373456454438
+        },
+        "momentum": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "rsi": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 6
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92570.56,
+      "priceToBeat": 92750.01,
+      "distancePct": "-0.1935",
+      "rawUp": 0.025862068965517238,
+      "adjustedUp": 0.1537386130714467,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.6925227738571066,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.3462613869285533,
+      "edgeDown": 0.34626138692855335,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "DOWN",
+          "weight": 3,
+          "distPct": -0.001934770680887227
+        },
+        "momentum": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 10
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92557.07,
+      "priceToBeat": 92750.01,
+      "distancePct": "-0.2080",
+      "rawUp": 0.07222222222222219,
+      "adjustedUp": 0.25302238484666006,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.49395523030667987,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.24697761515333994,
+      "edgeDown": 0.24697761515333994,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "STRONG DOWN",
+          "weight": 5,
+          "distPct": -0.002080215409141064
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 13
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92590.53,
+      "priceToBeat": 92750.01,
+      "distancePct": "-0.1719",
+      "rawUp": 0.44999999999999996,
+      "adjustedUp": 0.4776393202250021,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.04472135954999579,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": -0.022360679774997894,
+      "edgeDown": 0.022360679774997894,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "DOWN",
+          "weight": 3,
+          "distPct": -0.001719460731055403
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92529.56,
+      "priceToBeat": 92750.01,
+      "distancePct": "-0.2377",
+      "rawUp": 0.04999999999999999,
+      "adjustedUp": 0.3425,
+      "timeDecay": 0.35,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.31499999999999995,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.15749999999999997,
+      "edgeDown": 0.15749999999999997,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "STRONG DOWN",
+          "weight": 5,
+          "distPct": -0.0023768191507472303
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92540.54,
+      "priceToBeat": 92529.53,
+      "distancePct": "0.0119",
+      "rawUp": 0.24999999999999994,
+      "adjustedUp": 0.27639320225002095,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "DOWN",
+      "actualSide": "UP",
+      "correct": false,
+      "confidence": 0.4472135954999581,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.22360679774997905,
+      "edgeDown": 0.22360679774997905,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": 0.00011898904057974532
+        },
+        "momentum": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92561.7,
+      "priceToBeat": 92529.53,
+      "distancePct": "0.0348",
+      "rawUp": 0.5423076923076923,
+      "adjustedUp": 0.5308971699105478,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.06179433982109561,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": 0.030897169910547806,
+      "edgeDown": -0.030897169910547806,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": 0.00034767279159418895
+        },
+        "momentum": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92592.62,
+      "priceToBeat": 92529.53,
+      "distancePct": "0.0682",
+      "rawUp": 0.8870370370370371,
+      "adjustedUp": 0.7234559375196885,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.446911875039377,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.2234559375196885,
+      "edgeDown": -0.2234559375196885,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.000681836382395939
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92663.14,
+      "priceToBeat": 92529.53,
+      "distancePct": "0.1444",
+      "rawUp": 0.9125000000000001,
+      "adjustedUp": 0.6844756081437327,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.3689512162874653,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.18447560814373265,
+      "edgeDown": -0.18447560814373265,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0014439714543022166
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 3
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92652.11,
+      "priceToBeat": 92529.53,
+      "distancePct": "0.1325",
+      "rawUp": 0.8982758620689655,
+      "adjustedUp": 0.6393965517241379,
+      "timeDecay": 0.35,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.2787931034482758,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.1393965517241379,
+      "edgeDown": -0.1393965517241379,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0013247662665097483
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 5
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92691.22,
+      "priceToBeat": 92670.2,
+      "distancePct": "0.0227",
+      "rawUp": 0.7566666666666666,
+      "adjustedUp": 0.7295696456899783,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.45913929137995657,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.22956964568997829,
+      "edgeDown": -0.22956964568997829,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": 0.00022682588361743123
+        },
+        "momentum": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 9
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92767.56,
+      "priceToBeat": 92670.2,
+      "distancePct": "0.1051",
+      "rawUp": 0.98,
+      "adjustedUp": 0.8505424368033063,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.7010848736066126,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.3505424368033063,
+      "edgeDown": -0.3505424368033063,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.001050607422882443
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 2
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92808.01,
+      "priceToBeat": 92670.2,
+      "distancePct": "0.1487",
+      "rawUp": 0.9452380952380952,
+      "adjustedUp": 0.7570583341391905,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.5141166682783811,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.25705833413919055,
+      "edgeDown": -0.25705833413919055,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0014871015709472697
+        },
+        "momentum": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 5
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92808.01,
+      "priceToBeat": 92670.2,
+      "distancePct": "0.1487",
+      "rawUp": 0.9452380952380952,
+      "adjustedUp": 0.6991165294249813,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.3982330588499625,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.19911652942498126,
+      "edgeDown": -0.19911652942498126,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0014871015709472697
+        },
+        "momentum": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 7
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92812.98,
+      "priceToBeat": 92670.2,
+      "distancePct": "0.1541",
+      "rawUp": 0.8928571428571428,
+      "adjustedUp": 0.6375,
+      "timeDecay": 0.35,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.2749999999999999,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.13749999999999996,
+      "edgeDown": -0.13749999999999996,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0015407326195475874
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92833.46,
+      "priceToBeat": 92837,
+      "distancePct": "-0.0038",
+      "rawUp": 0.5,
+      "adjustedUp": 0.5,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": 0,
+      "edgeDown": 0,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.00003813134849245018
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 5
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92701.09,
+      "priceToBeat": 92837,
+      "distancePct": "-0.1464",
+      "rawUp": 0.08749999999999997,
+      "adjustedUp": 0.19875259337215861,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.6024948132556828,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.3012474066278414,
+      "edgeDown": 0.30124740662784144,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "DOWN",
+          "weight": 3,
+          "distPct": -0.001463963721361133
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 4
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92708.06,
+      "priceToBeat": 92837,
+      "distancePct": "-0.1389",
+      "rawUp": 0.39,
+      "adjustedUp": 0.43649147038914116,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.1270170592217177,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "WAIT",
+      "recSide": null,
+      "edgeUp": -0.06350852961085884,
+      "edgeDown": 0.06350852961085884,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "DOWN",
+          "weight": 3,
+          "distPct": -0.0013888858967868666
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 7
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92683.31,
+      "priceToBeat": 92837,
+      "distancePct": "-0.1655",
+      "rawUp": 0.09193548387096773,
+      "adjustedUp": 0.31750800054598494,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.3649839989080301,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.18249199945401506,
+      "edgeDown": 0.18249199945401506,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "DOWN",
+          "weight": 3,
+          "distPct": -0.0016554821892133776
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 9
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92680.63,
+      "priceToBeat": 92837,
+      "distancePct": "-0.1684",
+      "rawUp": 0.10172413793103446,
+      "adjustedUp": 0.3606034482758621,
+      "timeDecay": 0.35,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.2787931034482758,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.1393965517241379,
+      "edgeDown": 0.1393965517241379,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "DOWN",
+          "weight": 3,
+          "distPct": -0.0016843499897669608
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN DOWN",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 11
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92709.97,
+      "priceToBeat": 92669.85,
+      "distancePct": "0.0433",
+      "rawUp": 0.8586956521739131,
+      "adjustedUp": 0.8208271445977959,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "UP",
+      "actualSide": "DOWN",
+      "correct": false,
+      "confidence": 0.6416542891955919,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.32082714459779593,
+      "edgeDown": -0.32082714459779593,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.000432934767888319
+        },
+        "momentum": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "rsi": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 2
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92726,
+      "priceToBeat": 92669.85,
+      "distancePct": "0.0606",
+      "rawUp": 0.8586956521739131,
+      "adjustedUp": 0.7619542666329056,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "UP",
+      "actualSide": "DOWN",
+      "correct": false,
+      "confidence": 0.5239085332658111,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.26195426663290555,
+      "edgeDown": -0.26195426663290555,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.0006059144371118997
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "count": 1
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92647,
+      "priceToBeat": 92669.85,
+      "distancePct": "-0.0247",
+      "rawUp": 0.13333333333333325,
+      "adjustedUp": 0.28830490129713715,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.4233901974057257,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.21169509870286285,
+      "edgeDown": 0.21169509870286285,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": -0.0002465742633661954
+        },
+        "momentum": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 4
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92627.35,
+      "priceToBeat": 92669.85,
+      "distancePct": "-0.0459",
+      "rawUp": 0.07222222222222219,
+      "adjustedUp": 0.308691961925018,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.38261607614996396,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.19130803807498198,
+      "edgeDown": 0.19130803807498198,
+      "multiTf": false,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN DOWN",
+          "weight": 1.5,
+          "distPct": -0.00045861733886479796
+        },
+        "momentum": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 6
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "CONFLICT (1m vs 5m)",
+          "weight": 0
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92603.7,
+      "priceToBeat": 92669.85,
+      "distancePct": "-0.0714",
+      "rawUp": 0.025862068965517238,
+      "adjustedUp": 0.33405172413793105,
+      "timeDecay": 0.35,
+      "predictedSide": "DOWN",
+      "actualSide": "DOWN",
+      "correct": true,
+      "confidence": 0.3318965517241379,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "DOWN",
+      "edgeUp": -0.16594827586206895,
+      "edgeDown": 0.16594827586206895,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN DOWN",
+          "weight": 1.5,
+          "distPct": -0.0007138243991978915
+        },
+        "momentum": {
+          "signal": "STRONG DOWN",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "DOWN",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "DOWN (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "DOWN",
+          "weight": 1,
+          "count": 8
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "DOWN (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92693.2,
+      "priceToBeat": 92614.84,
+      "distancePct": "0.0846",
+      "rawUp": 0.8224137931034483,
+      "adjustedUp": 0.7883756633051453,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.5767513266102906,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.2883756633051453,
+      "edgeDown": -0.2883756633051453,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.000846084709534677
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 3
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 8,
+      "price": 92704.33,
+      "priceToBeat": 92614.84,
+      "distancePct": "0.0966",
+      "rawUp": 0.8928571428571428,
+      "adjustedUp": 0.7869022920265155,
+      "timeDecay": 0.7302967433402214,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.573804584053031,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.2869022920265155,
+      "edgeDown": -0.2869022920265155,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "LEAN UP",
+          "weight": 1.5,
+          "distPct": 0.0009662598348170254
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 7
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 5,
+      "price": 92710.02,
+      "priceToBeat": 92614.84,
+      "distancePct": "0.1028",
+      "rawUp": 0.9080645161290323,
+      "adjustedUp": 0.7355961582338312,
+      "timeDecay": 0.5773502691896257,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.47119231646766235,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.23559615823383118,
+      "edgeDown": -0.23559615823383118,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0010276970731689173
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "DOWN",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 10
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 3,
+      "price": 92730.26,
+      "priceToBeat": 92614.84,
+      "distancePct": "0.1246",
+      "rawUp": 0.9766666666666668,
+      "adjustedUp": 0.71317181385498,
+      "timeDecay": 0.4472135954999579,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.4263436277099599,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.21317181385497996,
+      "edgeDown": -0.21317181385497996,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.001246236564248216
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "NEUTRAL",
+          "weight": 0
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 12
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 1,
+      "price": 92768.05,
+      "priceToBeat": 92614.84,
+      "distancePct": "0.1654",
+      "rawUp": 0.9766666666666668,
+      "adjustedUp": 0.6668333333333334,
+      "timeDecay": 0.35,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.3336666666666668,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.1668333333333334,
+      "edgeDown": -0.1668333333333334,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "UP",
+          "weight": 3,
+          "distPct": 0.0016542705251124594
+        },
+        "momentum": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "rsi": {
+          "signal": "UP",
+          "weight": 2
+        },
+        "macdHist": {
+          "signal": "UP (expanding)",
+          "weight": 1
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 14
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    },
+    {
+      "minutesLeft": 12,
+      "price": 92785.63,
+      "priceToBeat": 92760.16,
+      "distancePct": "0.0275",
+      "rawUp": 0.9543478260869565,
+      "adjustedUp": 0.9063810498238747,
+      "timeDecay": 0.8944271909999159,
+      "predictedSide": "UP",
+      "actualSide": "UP",
+      "correct": true,
+      "confidence": 0.8127620996477494,
+      "regime": "moderate",
+      "session": "Asia",
+      "rec": "ENTER",
+      "recSide": "UP",
+      "edgeUp": 0.4063810498238747,
+      "edgeDown": -0.4063810498238747,
+      "multiTf": true,
+      "breakdown": {
+        "ptbDistance": {
+          "signal": "NEUTRAL",
+          "weight": 0,
+          "distPct": 0.0002745790865388887
+        },
+        "momentum": {
+          "signal": "STRONG UP",
+          "weight": 3
+        },
+        "rsi": {
+          "signal": "LEAN UP",
+          "weight": 1
+        },
+        "macdHist": {
+          "signal": "UP",
+          "weight": 0.5
+        },
+        "macdLine": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "vwapPos": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "vwapSlope": {
+          "signal": "UP",
+          "weight": 1
+        },
+        "heikenAshi": {
+          "signal": "UP",
+          "weight": 1,
+          "count": 18
+        },
+        "failedVwap": {
+          "signal": "N/A",
+          "weight": 0
+        },
+        "orderbook": {
+          "signal": "N/A",
+          "weight": 0,
+          "detail": ""
+        },
+        "multiTf": {
+          "signal": "UP (confirmed)",
+          "weight": 2
+        },
+        "regime": {
+          "effect": "NEUTRAL",
+          "multiplier": 1
+        },
+        "volatility": {
+          "session": "Asia",
+          "multiplier": 1.1,
+          "label": "🌏 Asia Session (Low Vol)"
+        },
+        "feedback": {
+          "multiplier": 1,
+          "accuracy": null,
+          "label": "No data"
+        }
+      }
+    }
+  ]
+}

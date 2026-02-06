@@ -10,6 +10,11 @@ import { computeHeikenAshi, countConsecutive } from '../indicators/heikenAshi.js
 import { detectRegime } from '../engines/regime.js';
 import { scoreDirection, applyTimeAwareness } from '../engines/probability.js';
 import { computeEdge, decide } from '../engines/edge.js';
+import { analyzeOrderbook } from '../engines/orderbook.js';
+import { getVolatilityProfile, computeRealizedVol } from '../engines/volatility.js';
+import { computeMultiTfConfirmation } from '../engines/multitf.js';
+import { getAccuracyStats, recordPrediction, autoSettle } from '../engines/feedback.js';
+import { loadMLModel, getMLPrediction, getMLStatus } from '../engines/Mlpredictor.js'; 
 import {
   getCandleWindowTiming,
   narrativeFromSign,
@@ -27,6 +32,16 @@ function countVwapCrosses(closes, vwapSeries, lookback) {
     if ((prev > 0 && cur < 0) || (prev < 0 && cur > 0)) crosses += 1;
   }
   return crosses;
+}
+
+// ═══ ML: Session helper for feature extraction ═══
+function getSessionName() {
+  const h = new Date().getUTCHours();
+  if (h >= 13 && h < 16) return 'EU/US Overlap';
+  if (h >= 13 && h < 22) return 'US';
+  if (h >= 8 && h < 16) return 'Europe';
+  if (h >= 0 && h < 8) return 'Asia';
+  return 'Off-hours';
 }
 
 export function useMarketData({ clobWs } = {}) {
@@ -48,6 +63,14 @@ export function useMarketData({ clobWs } = {}) {
 
   // Prevent concurrent polls
   const pollingRef = useRef(false);
+
+  // ◄── CHANGE 2: Load ML model once on mount
+  useEffect(() => {
+    loadMLModel().then(ok => {
+      if (ok) console.log('[ML] XGBoost model loaded ✅');
+      else console.warn('[ML] Model not found — running rule-based only');
+    });
+  }, []);
 
   // ═══ NEW: Force invalidate all market cache ═══
   const invalidateMarketCache = useCallback(() => {
@@ -80,10 +103,11 @@ export function useMarketData({ clobWs } = {}) {
       }
 
       // 1. Always fetch klines + last price (needed for TA)
-      let klines1m, lastPrice;
+      let klines1m, klines5m, lastPrice;
       try {
-        [klines1m, lastPrice] = await Promise.all([
+        [klines1m, klines5m, lastPrice] = await Promise.all([
           fetchKlines({ interval: '1m', limit: 240 }),
+          fetchKlines({ interval: '5m', limit: 48 }),  // 48 × 5m = 4 hours
           fetchLastPrice(),
         ]);
       } catch (err) {
@@ -232,7 +256,49 @@ export function useMarketData({ clobWs } = {}) {
         priceToBeatRef.current.value = priceToBeat;
       }
 
-      // Probability — REWORKED: passes PTB distance + momentum + regime as signals
+      // ═══ v2: ORDERBOOK SIGNAL ═══
+      const wsOrderbook = clobWs?.orderbook;
+      const wsUpPrice = clobWs?.upPrice;
+      const wsDownPrice = clobWs?.downPrice;
+      const wsDataFresh = wsConnected && !slugChanged;
+
+      const earlyMarketUp = wsDataFresh && wsUpPrice !== null ? wsUpPrice : (poly.ok ? poly.prices.up : null);
+      const earlyMarketDown = wsDataFresh && wsDownPrice !== null ? wsDownPrice : (poly.ok ? poly.prices.down : null);
+
+      const orderbookSignal = analyzeOrderbook({
+        orderbookUp: wsDataFresh ? (wsOrderbook?.up ?? null) : (poly.ok ? poly.orderbook?.up : null),
+        orderbookDown: wsDataFresh ? (wsOrderbook?.down ?? null) : (poly.ok ? poly.orderbook?.down : null),
+        marketUp: earlyMarketUp,
+        marketDown: earlyMarketDown,
+      });
+
+      // ═══ v2: VOLATILITY PROFILE (session-adaptive) ═══
+      const volProfile = getVolatilityProfile();
+      const realizedVol = computeRealizedVol(closes, 15);
+
+      // ═══ v2: MULTI-TIMEFRAME CONFIRMATION (1m + 5m) ═══
+      const closes5m = klines5m.map(c => c.close);
+      const delta5m = closes5m.length >= 2
+        ? closes5m[closes5m.length - 1] - closes5m[closes5m.length - 2]
+        : null;
+      const ha5m = computeHeikenAshi(klines5m);
+      const consec5m = countConsecutive(ha5m);
+      const rsi5m = computeRsi(closes5m, 8);
+
+      const multiTfConfirm = computeMultiTfConfirmation({
+        delta1m,
+        delta3m,
+        delta5m,
+        ha1mColor: consec.color,
+        ha5mColor: consec5m.color,
+        rsi1m: rsiNow,
+        rsi5m,
+      });
+
+      // ═══ v2: FEEDBACK ACCURACY STATS ═══
+      const feedbackStats = getAccuracyStats();
+
+      // Probability — v2: all signals including orderbook, multi-TF, vol, feedback
       const scored = scoreDirection({
         price: lastPrice,
         priceToBeat: priceToBeatRef.current.value,
@@ -247,6 +313,10 @@ export function useMarketData({ clobWs } = {}) {
         delta1m,
         delta3m,
         regime: regimeInfo,
+        orderbookSignal,
+        volProfile,
+        multiTfConfirm,
+        feedbackStats,
       });
 
       // Settlement timing
@@ -261,28 +331,11 @@ export function useMarketData({ clobWs } = {}) {
         CONFIG.candleWindowMinutes,
       );
 
-      // ═══ CLOB Prices ═══
-      const wsUpPrice = clobWs?.upPrice;
-      const wsDownPrice = clobWs?.downPrice;
+      // ═══ CLOB Prices (reuse from orderbook section above) ═══
+      const marketUp = earlyMarketUp;
+      const marketDown = earlyMarketDown;
 
-      // ═══ NEW: Don't use stale WS prices right after market switch ═══
-      const wsDataFresh = wsConnected && !slugChanged;
-
-      const marketUp =
-        wsDataFresh && wsUpPrice !== null
-          ? wsUpPrice
-          : poly.ok
-            ? poly.prices.up
-            : null;
-      const marketDown =
-        wsDataFresh && wsDownPrice !== null
-          ? wsDownPrice
-          : poly.ok
-            ? poly.prices.down
-            : null;
-
-      // Orderbook
-      const wsOrderbook = clobWs?.orderbook;
+      // Orderbook (for display — reuse wsOrderbook from above)
       const orderbookUp =
         wsDataFresh && wsOrderbook?.up?.bestBid !== null
           ? wsOrderbook.up
@@ -309,7 +362,53 @@ export function useMarketData({ clobWs } = {}) {
         edgeDown: edge.edgeDown,
         modelUp: timeAware.adjustedUp,
         modelDown: timeAware.adjustedDown,
+        breakdown: scored.breakdown,
+        multiTfConfirmed: multiTfConfirm?.agreement ?? false,
       });
+
+      // ◄── CHANGE 3: ML Ensemble prediction (after decide, before feedback)
+      const mlResult = getMLPrediction({
+        price: lastPrice,
+        priceToBeat: priceToBeatRef.current.value,
+        rsi: rsiNow,
+        rsiSlope,
+        macd,
+        vwap: vwapNow,
+        vwapSlope,
+        heikenColor: consec.color,
+        heikenCount: consec.count,
+        delta1m,
+        delta3m,
+        volumeRecent,
+        volumeAvg,
+        regime: regimeInfo.regime,
+        session: getSessionName(),
+        minutesLeft: timeLeftMin,
+        bestEdge: Math.max(edge.edgeUp ?? 0, edge.edgeDown ?? 0),
+        vwapCrossCount,
+        multiTfAgreement: multiTfConfirm?.agreement ?? false,
+        failedVwapReclaim,
+      }, timeAware.adjustedUp);
+
+      // ═══ v2: FEEDBACK — Record predictions & auto-settle ═══
+      try {
+        // Auto-settle old predictions
+        autoSettle(marketSlug, lastPrice, priceToBeatRef.current.value, timeLeftMin);
+
+        // Record new prediction when ENTER signal fires
+        if (rec.action === 'ENTER' && rec.side && marketSlug) {
+          recordPrediction({
+            side: rec.side,
+            modelProb: rec.side === 'UP' ? timeAware.adjustedUp : timeAware.adjustedDown,
+            marketPrice: rec.side === 'UP' ? marketUp : marketDown,
+            btcPrice: lastPrice,
+            priceToBeat: priceToBeatRef.current.value,
+            marketSlug,
+          });
+        }
+      } catch {
+        // Feedback tracking should never break the main loop
+      }
 
 
       // MACD label
@@ -407,6 +506,30 @@ export function useMarketData({ clobWs } = {}) {
         rec,
         timeLeftMin,
         timing,
+        // ═══ v2 fields ═══
+        orderbookSignal,
+        volProfile,
+        realizedVol,
+        multiTfConfirm,
+        feedbackStats,
+        // ◄── CHANGE 4: ML Ensemble data in return state
+        ml: mlResult.available ? {
+          probUp: mlResult.mlProbUp,
+          confidence: mlResult.mlConfidence,
+          side: mlResult.mlSide,
+          ensembleProbUp: mlResult.ensembleProbUp,
+          alpha: mlResult.alpha,
+          source: mlResult.source,
+          status: 'ready',
+        } : {
+          probUp: null,
+          confidence: null,
+          side: null,
+          ensembleProbUp: null,
+          alpha: 0,
+          source: 'Rule-only',
+          status: getMLStatus().status,
+        },
       });
 
       setLastUpdated(Date.now());

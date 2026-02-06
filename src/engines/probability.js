@@ -1,42 +1,34 @@
 /**
- * ═══ REWORKED Probability Engine for 15-Minute Polymarket ═══
+ * ═══ REWORKED Probability Engine v2 for 15-Minute Polymarket ═══
  *
- * Key changes from original:
- * 1. "Distance to Price to Beat" is now the PRIMARY indicator (weight 5)
- * 2. Short-term momentum (delta 1m/3m) weighted higher than long-term (VWAP/MACD)
- * 3. Time decay uses sqrt curve with floor (never kills signals completely)
- * 4. MACD/VWAP weights reduced (less relevant for 15-min windows)
+ * v2 additions:
+ * 5. Orderbook signal (bid/ask imbalance from CLOB WebSocket)
+ * 6. Volatility-adaptive PTB thresholds (session-aware)
+ * 7. Multi-timeframe confirmation (1m + 5m agreement)
+ * 8. Feedback confidence adjustment (recent accuracy tracking)
  *
  * WEIGHT TABLE:
- *   Price to PTB distance:  +5  (NEW — strongest signal)
- *   Delta momentum (1m/3m): +3  (NEW — short-term momentum)
- *   RSI + Slope:            +2  (keep)
- *   MACD Histogram:         +1  (reduced from 2)
- *   MACD Line:              +1  (keep)
- *   VWAP position:          +1  (reduced from 2)
- *   VWAP Slope:             +1  (reduced from 2)
- *   Heiken Ashi:            +1  (keep)
- *   Failed VWAP Reclaim:    +2  (reduced from 3)
- *   Total possible per side: ~17
+ *   Price to PTB distance:    +5  (adaptive thresholds per session)
+ *   Delta momentum (1m/3m):   +3
+ *   Orderbook imbalance:      +2  (NEW — real money signal)
+ *   Multi-TF confirmation:    +2  (NEW — 1m+5m agreement)
+ *   RSI + Slope:              +2
+ *   MACD Histogram:           +1
+ *   MACD Line:                +1
+ *   VWAP position:            +1
+ *   VWAP Slope:               +1
+ *   Heiken Ashi:              +1
+ *   Failed VWAP Reclaim:      +2
+ *   Total possible per side:  ~21
+ *
+ *   Post-scoring multipliers:
+ *   - Regime:     0.60x (choppy) to 1.25x (trending)
+ *   - Volatility: 0.90x (high vol) to 1.10x (low vol)
+ *   - Feedback:   0.70x (ice cold) to 1.15x (hot streak)
  */
 
 /**
- * Score directional bias based on all indicators.
- *
- * @param {Object} params
- * @param {number} params.price - current BTC price
- * @param {number|null} params.priceToBeat - settlement target price
- * @param {number|null} params.vwap - current VWAP
- * @param {number|null} params.vwapSlope
- * @param {number|null} params.rsi - current RSI
- * @param {number|null} params.rsiSlope
- * @param {Object|null} params.macd - { hist, histDelta, line }
- * @param {string|null} params.heikenColor - 'green' or 'red'
- * @param {number} params.heikenCount - consecutive HA candle count
- * @param {boolean} params.failedVwapReclaim
- * @param {number|null} params.delta1m - price change last 1 min
- * @param {number|null} params.delta3m - price change last 3 min
- * @returns {{ upScore: number, downScore: number, totalWeight: number, rawUp: number, rawDown: number, breakdown: Object }}
+ * Score directional bias based on all indicators + orderbook + multi-TF.
  */
 export function scoreDirection({
   price,
@@ -52,37 +44,39 @@ export function scoreDirection({
   delta1m = null,
   delta3m = null,
   regime = null,
+  // ═══ NEW v2 params ═══
+  orderbookSignal = null,   // from analyzeOrderbook()
+  volProfile = null,        // from getVolatilityProfile()
+  multiTfConfirm = null,    // { signal: 'UP'|'DOWN'|'NEUTRAL', agreement: bool }
+  feedbackStats = null,     // from getAccuracyStats()
 }) {
   let upScore = 1;   // base
   let downScore = 1;  // base
   const breakdown = {};
 
   // ═══ 1. DISTANCE TO PRICE TO BEAT (weight: 5) ═══
-  // This is THE most important signal. If price is far above/below the
-  // settlement target with time left, probability should be very directional.
+  // Thresholds are now ADAPTIVE based on session volatility.
+  // Asia: 0.1% is big → lower thresholds. US overlap: 0.3% is normal → higher thresholds.
   if (priceToBeat !== null && price !== null && priceToBeat > 0) {
     const distance = price - priceToBeat;
-    const distPct = distance / priceToBeat;  // e.g., +0.002 = +0.2%
+    const distPct = distance / priceToBeat;
 
-    // Graduated scoring based on distance
-    // BTC moves ~0.1-0.3% in 15 min normally
-    if (Math.abs(distPct) > 0.003) {
-      // Very far (>0.3%) — almost certain
+    // Use session-adaptive thresholds if available, else defaults
+    const thr = volProfile?.ptbThresholds ?? { strong: 0.003, moderate: 0.0015, slight: 0.0005 };
+
+    if (Math.abs(distPct) > thr.strong) {
       if (distance > 0) upScore += 5;
       else downScore += 5;
       breakdown.ptbDistance = { signal: distance > 0 ? 'STRONG UP' : 'STRONG DOWN', weight: 5, distPct };
-    } else if (Math.abs(distPct) > 0.0015) {
-      // Moderate (0.15-0.3%) — strong lean
+    } else if (Math.abs(distPct) > thr.moderate) {
       if (distance > 0) upScore += 3;
       else downScore += 3;
       breakdown.ptbDistance = { signal: distance > 0 ? 'UP' : 'DOWN', weight: 3, distPct };
-    } else if (Math.abs(distPct) > 0.0005) {
-      // Close (0.05-0.15%) — slight lean
+    } else if (Math.abs(distPct) > thr.slight) {
       if (distance > 0) upScore += 1.5;
       else downScore += 1.5;
       breakdown.ptbDistance = { signal: distance > 0 ? 'LEAN UP' : 'LEAN DOWN', weight: 1.5, distPct };
     } else {
-      // Very close (<0.05%) — toss-up
       breakdown.ptbDistance = { signal: 'NEUTRAL', weight: 0, distPct };
     }
   } else {
@@ -230,24 +224,50 @@ export function scoreDirection({
     breakdown.failedVwap = { signal: 'N/A', weight: 0 };
   }
 
+  // ═══ 9. ORDERBOOK IMBALANCE (weight: 2) — NEW ═══
+  // Real money signal from Polymarket CLOB WebSocket.
+  // Bid/ask imbalance shows what traders are actually doing.
+  if (orderbookSignal && orderbookSignal.signal !== 'NEUTRAL' && orderbookSignal.weight > 0) {
+    if (orderbookSignal.signal === 'UP') {
+      upScore += orderbookSignal.weight;
+    } else if (orderbookSignal.signal === 'DOWN') {
+      downScore += orderbookSignal.weight;
+    }
+    breakdown.orderbook = {
+      signal: orderbookSignal.signal,
+      weight: orderbookSignal.weight,
+      detail: orderbookSignal.detail,
+    };
+  } else {
+    breakdown.orderbook = { signal: orderbookSignal?.signal ?? 'N/A', weight: 0, detail: orderbookSignal?.detail ?? '' };
+  }
+
+  // ═══ 10. MULTI-TIMEFRAME CONFIRMATION (weight: 2) — NEW ═══
+  // When 1m and 5m candles agree on direction, signal is more reliable.
+  // When they disagree, reduce confidence.
+  if (multiTfConfirm && multiTfConfirm.signal !== 'NEUTRAL') {
+    if (multiTfConfirm.agreement) {
+      // 5m confirms 1m direction → boost
+      if (multiTfConfirm.signal === 'UP') {
+        upScore += 2;
+        breakdown.multiTf = { signal: 'UP (confirmed)', weight: 2 };
+      } else {
+        downScore += 2;
+        breakdown.multiTf = { signal: 'DOWN (confirmed)', weight: 2 };
+      }
+    } else {
+      // 5m contradicts 1m → this is actually a counter-signal, don't add weight
+      breakdown.multiTf = { signal: `CONFLICT (1m vs 5m)`, weight: 0 };
+    }
+  } else {
+    breakdown.multiTf = { signal: multiTfConfirm?.signal ?? 'N/A', weight: 0 };
+  }
+
   // ═══ CALCULATE RAW PROBABILITY ═══
   const totalWeight = upScore + downScore;
   let rawUp = totalWeight > 0 ? upScore / totalWeight : 0.5;
 
-  // ═══ 9. REGIME ADJUSTMENT ═══
-  // Trending   → boost confidence (amplify distance from 50%)
-  // Choppy     → reduce confidence (compress toward 50%)
-  // Mean Rev   → slightly reduce
-  // Other      → no change
-  //
-  // Formula: adjustedRaw = 0.5 + (rawUp - 0.5) * regimeMultiplier
-  //
-  // | Regime        | Multiplier | rawUp 65% → adjusted |
-  // |---------------|------------|----------------------|
-  // | Trending      | 1.25       | 65% → 68.75%         |
-  // | Moderate      | 1.00       | 65% → 65%            |
-  // | Mean Reverting| 0.80       | 65% → 62%            |
-  // | Choppy        | 0.60       | 65% → 59%            |
+  // ═══ 11. REGIME ADJUSTMENT ═══
   let regimeMultiplier = 1.0;
   let regimeEffect = 'NONE';
 
@@ -270,13 +290,34 @@ export function scoreDirection({
         regimeEffect = 'NEUTRAL';
         break;
     }
-
     rawUp = 0.5 + (rawUp - 0.5) * regimeMultiplier;
-    // Clamp to valid probability range
-    rawUp = Math.max(0.02, Math.min(0.98, rawUp));
   }
-
   breakdown.regime = { effect: regimeEffect, multiplier: regimeMultiplier };
+
+  // ═══ 12. VOLATILITY SESSION ADJUSTMENT — NEW ═══
+  const volMultiplier = volProfile?.confidenceMultiplier ?? 1.0;
+  if (volMultiplier !== 1.0) {
+    rawUp = 0.5 + (rawUp - 0.5) * volMultiplier;
+  }
+  breakdown.volatility = {
+    session: volProfile?.session ?? 'unknown',
+    multiplier: volMultiplier,
+    label: volProfile?.label ?? '',
+  };
+
+  // ═══ 13. FEEDBACK ACCURACY ADJUSTMENT — NEW ═══
+  const fbMultiplier = feedbackStats?.confidenceMultiplier ?? 1.0;
+  if (fbMultiplier !== 1.0) {
+    rawUp = 0.5 + (rawUp - 0.5) * fbMultiplier;
+  }
+  breakdown.feedback = {
+    multiplier: fbMultiplier,
+    accuracy: feedbackStats?.accuracy ?? null,
+    label: feedbackStats?.label ?? 'No data',
+  };
+
+  // Clamp to valid probability range
+  rawUp = Math.max(0.02, Math.min(0.98, rawUp));
 
   const rawDown = 1 - rawUp;
 

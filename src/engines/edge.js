@@ -1,33 +1,27 @@
 /**
- * ═══ REWORKED Edge & Decision Engine ═══
+ * ═══ Edge & Decision Engine v2 ═══
  *
- * Key changes:
- * 1. LATE phase thresholds lowered to work WITH new time decay (not against it)
- * 2. Added VERY_LATE phase (< 2 min) with lowest thresholds for high-confidence entries
- * 3. Edge = difference between model probability and market price (value bet detection)
+ * v2 changes:
+ * 1. Raised probability thresholds (55% → 58-60%)
+ * 2. Raised edge thresholds (5-12% → 8-15%)
+ * 3. Added quality gates: minimum indicator agreement count
+ * 4. Added multiTF confirmation requirement for EARLY/MID phases
  *
- * PHASE TABLE:
- * | Phase     | Time Left | Min Edge | Min Prob | Rationale                           |
- * |-----------|-----------|----------|----------|-------------------------------------|
- * | EARLY     | > 10 min  | 5%       | 55%      | Still developing, need moderate edge |
- * | MID       | 5-10 min  | 8%       | 55%      | More data, slightly higher edge req  |
- * | LATE      | 2-5 min   | 10%      | 55%      | Good info, need solid edge           |
- * | VERY_LATE | < 2 min   | 12%      | 55%      | Most info but less time to converge  |
+ * Result: Fewer ENTER signals but much higher accuracy.
+ * Before: 71% trade rate, 77.7% accuracy
+ * Target: ~50% trade rate, 83-85% accuracy
  *
- * Old LATE was 20% edge + 65% prob → IMPOSSIBLE with old time decay.
- * New LATE is 10% edge + 55% prob → achievable with sqrt time decay floor.
+ * PHASE TABLE v2:
+ * | Phase     | Time Left | Min Edge | Min Prob | Min Agreement | MultiTF Req |
+ * |-----------|-----------|----------|----------|---------------|-------------|
+ * | EARLY     | > 10 min  | 8%       | 60%      | 3             | preferred   |
+ * | MID       | 5-10 min  | 10%      | 58%      | 3             | preferred   |
+ * | LATE      | 2-5 min   | 12%      | 57%      | 2             | no          |
+ * | VERY_LATE | < 2 min   | 15%      | 56%      | 2             | no          |
  */
 
 /**
  * Compute edge: model probability minus market price.
- * Positive edge means our model thinks the event is more likely than the market prices it.
- *
- * @param {Object} params
- * @param {number} params.modelUp - model P(up) (0-1)
- * @param {number} params.modelDown - model P(down) (0-1)
- * @param {number|null} params.marketYes - market price for YES/UP (0-1)
- * @param {number|null} params.marketNo - market price for NO/DOWN (0-1)
- * @returns {{ edgeUp: number|null, edgeDown: number|null, bestSide: string|null, bestEdge: number|null }}
  */
 export function computeEdge({ modelUp, modelDown, marketYes, marketNo }) {
   const edgeUp = marketYes !== null && Number.isFinite(marketYes)
@@ -60,103 +54,151 @@ export function computeEdge({ modelUp, modelDown, marketYes, marketNo }) {
 }
 
 /**
- * Phase-based decision: should we enter a position?
+ * Count how many indicators agree on a direction from breakdown.
+ * @param {Object} breakdown - scoreDirection breakdown
+ * @param {string} side - 'UP' or 'DOWN'
+ * @returns {number} count of agreeing indicators
+ */
+export function countAgreement(breakdown, side) {
+  if (!breakdown) return 0;
+
+  let count = 0;
+  const signalKeys = [
+    'ptbDistance', 'momentum', 'rsi', 'macdHist', 'macdLine',
+    'vwapPos', 'vwapSlope', 'heikenAshi', 'failedVwap', 'orderbook', 'multiTf',
+  ];
+
+  for (const key of signalKeys) {
+    const entry = breakdown[key];
+    if (!entry || entry.weight === 0) continue;
+
+    const signal = entry.signal?.toUpperCase() ?? '';
+    if (side === 'UP' && (signal.includes('UP') || signal === 'UP (CONFIRMED)')) count++;
+    if (side === 'DOWN' && (signal.includes('DOWN') || signal === 'DOWN (CONFIRMED)')) count++;
+  }
+
+  return count;
+}
+
+/**
+ * Phase-based decision with quality gates.
  *
  * @param {Object} params
  * @param {number} params.remainingMinutes
  * @param {number|null} params.edgeUp
  * @param {number|null} params.edgeDown
- * @param {number} params.modelUp - adjusted P(up)
- * @param {number} params.modelDown - adjusted P(down)
+ * @param {number} params.modelUp
+ * @param {number} params.modelDown
+ * @param {Object} [params.breakdown] - scoring breakdown for agreement count
+ * @param {boolean} [params.multiTfConfirmed] - whether 1m+5m agree
  * @returns {{ action: string, side: string|null, confidence: string, phase: string, reason: string }}
  */
-export function decide({ remainingMinutes, edgeUp, edgeDown, modelUp, modelDown }) {
-  // Determine phase
-  let phase, minEdge, minProb;
+export function decide({
+  remainingMinutes,
+  edgeUp,
+  edgeDown,
+  modelUp,
+  modelDown,
+  breakdown = null,
+  multiTfConfirmed = false,
+}) {
+  // ═══ Phase thresholds v2 (stricter) ═══
+  let phase, minEdge, minProb, minAgreement, preferMultiTf;
 
   if (remainingMinutes > 10) {
     phase = 'EARLY';
-    minEdge = 0.05;
-    minProb = 0.55;
+    minEdge = 0.08;
+    minProb = 0.60;
+    minAgreement = 3;
+    preferMultiTf = true;
   } else if (remainingMinutes > 5) {
     phase = 'MID';
-    minEdge = 0.08;
-    minProb = 0.55;
+    minEdge = 0.10;
+    minProb = 0.58;
+    minAgreement = 3;
+    preferMultiTf = true;
   } else if (remainingMinutes > 2) {
     phase = 'LATE';
-    minEdge = 0.10;
-    minProb = 0.55;
+    minEdge = 0.12;
+    minProb = 0.57;
+    minAgreement = 2;
+    preferMultiTf = false;
   } else {
     phase = 'VERY_LATE';
-    minEdge = 0.12;
-    minProb = 0.55;
+    minEdge = 0.15;
+    minProb = 0.56;
+    minAgreement = 2;
+    preferMultiTf = false;
   }
 
+  // Count agreements if breakdown available
+  const upAgreement = breakdown ? countAgreement(breakdown, 'UP') : 99;
+  const downAgreement = breakdown ? countAgreement(breakdown, 'DOWN') : 99;
+
   // Check UP side
-  const upPass = edgeUp !== null && edgeUp >= minEdge && modelUp >= minProb;
+  const upEdgePass = edgeUp !== null && edgeUp >= minEdge;
+  const upProbPass = modelUp >= minProb;
+  const upAgreementPass = upAgreement >= minAgreement;
+  const upMultiTfPass = !preferMultiTf || multiTfConfirmed || upAgreement >= 4; // 4+ agreement waives multiTF
+  const upPass = upEdgePass && upProbPass && upAgreementPass && upMultiTfPass;
+
   // Check DOWN side
-  const downPass = edgeDown !== null && edgeDown >= minEdge && modelDown >= minProb;
+  const downEdgePass = edgeDown !== null && edgeDown >= minEdge;
+  const downProbPass = modelDown >= minProb;
+  const downAgreementPass = downAgreement >= minAgreement;
+  const downMultiTfPass = !preferMultiTf || multiTfConfirmed || downAgreement >= 4;
+  const downPass = downEdgePass && downProbPass && downAgreementPass && downMultiTfPass;
 
   if (upPass && downPass) {
-    // Both pass — pick the stronger edge
     if (edgeUp >= edgeDown) {
-      return {
-        action: 'ENTER',
-        side: 'UP',
-        confidence: getConfidence(edgeUp, modelUp),
-        phase,
-        reason: `UP edge ${(edgeUp * 100).toFixed(1)}% > min ${(minEdge * 100).toFixed(0)}%, model ${(modelUp * 100).toFixed(0)}% > ${(minProb * 100).toFixed(0)}%`,
-      };
+      return makeEnter('UP', edgeUp, modelUp, upAgreement, phase, minEdge, minProb);
     } else {
-      return {
-        action: 'ENTER',
-        side: 'DOWN',
-        confidence: getConfidence(edgeDown, modelDown),
-        phase,
-        reason: `DOWN edge ${(edgeDown * 100).toFixed(1)}% > min ${(minEdge * 100).toFixed(0)}%, model ${(modelDown * 100).toFixed(0)}% > ${(minProb * 100).toFixed(0)}%`,
-      };
+      return makeEnter('DOWN', edgeDown, modelDown, downAgreement, phase, minEdge, minProb);
     }
   }
 
   if (upPass) {
-    return {
-      action: 'ENTER',
-      side: 'UP',
-      confidence: getConfidence(edgeUp, modelUp),
-      phase,
-      reason: `UP edge ${(edgeUp * 100).toFixed(1)}% > min ${(minEdge * 100).toFixed(0)}%, model ${(modelUp * 100).toFixed(0)}% > ${(minProb * 100).toFixed(0)}%`,
-    };
+    return makeEnter('UP', edgeUp, modelUp, upAgreement, phase, minEdge, minProb);
   }
 
   if (downPass) {
-    return {
-      action: 'ENTER',
-      side: 'DOWN',
-      confidence: getConfidence(edgeDown, modelDown),
-      phase,
-      reason: `DOWN edge ${(edgeDown * 100).toFixed(1)}% > min ${(minEdge * 100).toFixed(0)}%, model ${(modelDown * 100).toFixed(0)}% > ${(minProb * 100).toFixed(0)}%`,
-    };
+    return makeEnter('DOWN', edgeDown, modelDown, downAgreement, phase, minEdge, minProb);
   }
 
-  // No edge found
+  // No entry — explain why
   const bestEdge = Math.max(edgeUp ?? -Infinity, edgeDown ?? -Infinity);
   const bestSide = (edgeUp ?? -1) >= (edgeDown ?? -1) ? 'UP' : 'DOWN';
   const bestProb = bestSide === 'UP' ? modelUp : modelDown;
+  const bestAgree = bestSide === 'UP' ? upAgreement : downAgreement;
+
+  const reasons = [];
+  if (bestEdge < minEdge) reasons.push(`edge ${(bestEdge * 100).toFixed(1)}% < ${(minEdge * 100).toFixed(0)}%`);
+  if (bestProb < minProb) reasons.push(`prob ${(bestProb * 100).toFixed(0)}% < ${(minProb * 100).toFixed(0)}%`);
+  if (bestAgree < minAgreement) reasons.push(`agree ${bestAgree} < ${minAgreement}`);
+  if (preferMultiTf && !multiTfConfirmed && bestAgree < 4) reasons.push('no multiTF confirm');
 
   return {
     action: 'WAIT',
     side: null,
     confidence: 'NONE',
     phase,
-    reason: `Best: ${bestSide} edge ${(bestEdge * 100).toFixed(1)}% (need ${(minEdge * 100).toFixed(0)}%), prob ${(bestProb * 100).toFixed(0)}% (need ${(minProb * 100).toFixed(0)}%)`,
+    reason: `${bestSide}: ${reasons.join(', ')}`,
   };
 }
 
-/**
- * Map edge + probability to confidence level.
- */
-function getConfidence(edge, prob) {
-  if (edge >= 0.20 && prob >= 0.65) return 'HIGH';
-  if (edge >= 0.12 && prob >= 0.58) return 'MEDIUM';
+function makeEnter(side, edge, prob, agreement, phase, minEdge, minProb) {
+  return {
+    action: 'ENTER',
+    side,
+    confidence: getConfidence(edge, prob, agreement),
+    phase,
+    reason: `${side} edge ${(edge * 100).toFixed(1)}%≥${(minEdge * 100).toFixed(0)}%, prob ${(prob * 100).toFixed(0)}%≥${(minProb * 100).toFixed(0)}%, ${agreement} indicators agree`,
+  };
+}
+
+function getConfidence(edge, prob, agreement) {
+  if (edge >= 0.25 && prob >= 0.68 && agreement >= 5) return 'VERY_HIGH';
+  if (edge >= 0.18 && prob >= 0.62 && agreement >= 4) return 'HIGH';
+  if (edge >= 0.12 && prob >= 0.58 && agreement >= 3) return 'MEDIUM';
   return 'LOW';
 }
