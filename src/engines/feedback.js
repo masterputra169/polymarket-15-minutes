@@ -1,64 +1,96 @@
 /**
- * ═══ Prediction Feedback Tracker ═══
+ * ═══ Prediction Feedback Tracker v3 (Memory Optimized) ═══
  *
- * Tracks recent prediction outcomes to adjust confidence.
- * Stores last N predictions and their results in localStorage.
+ * Performance problems in v1:
+ *   1. loadHistory() called 2-3x per poll → JSON.parse every 5s = GC pressure
+ *   2. getAccuracyStats() creates 3 intermediate arrays (.filter, .filter, .slice)
+ *   3. autoSettle() re-parses entire history even when nothing to settle
+ *   4. saveHistory() JSON.stringify on every tiny change
  *
- * Logic:
- * - If recent accuracy < 40% → reduce confidence (we're miscalibrated)
- * - If recent accuracy > 60% → slight boost (we're calibrated well)
- * - Otherwise → neutral
- *
- * This is NOT machine learning. It's a simple moving-window accuracy check
- * that acts as a "reality check" on the model's output.
+ * v3 fixes (master-backend caching patterns):
+ *   1. IN-MEMORY CACHE: Parse localStorage ONCE, work from memory
+ *   2. DIRTY FLAG: Only write to localStorage when data actually changed
+ *   3. DEBOUNCED PERSIST: Batch writes, save at most 1x/5s
+ *   4. PRE-COMPUTED STATS: Cache accuracy stats, invalidate on settle
+ *   5. ZERO INTERMEDIATE ARRAYS: Loop-based stats computation
  */
 
 const STORAGE_KEY = 'btc_prediction_tracker';
-const MAX_HISTORY = 30;  // Track last 30 predictions
+const MAX_HISTORY = 30;
+const PERSIST_DEBOUNCE_MS = 5_000; // Max 1 write per 5 seconds
 
-/**
- * Load prediction history from localStorage.
- * @returns {Array} predictions [{ timestamp, side, modelProb, marketPrice, settled, correct }, ...]
- */
-export function loadHistory() {
+// ═══ In-memory state (single source of truth) ═══
+let cache = null;        // Array — loaded once from localStorage
+let dirty = false;       // Needs localStorage write?
+let persistTimer = null; // Debounce timer for saves
+let statsCache = null;   // Cached getAccuracyStats result
+let statsDirty = true;   // Stats need recomputation?
+
+// ═══ Internal: Load once, cache forever ═══
+
+function ensureLoaded() {
+  if (cache !== null) return;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    cache = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(cache)) cache = [];
   } catch {
-    return [];
+    cache = [];
   }
 }
 
+function schedulePersist() {
+  if (persistTimer) return; // Already scheduled
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    if (!dirty) return;
+    dirty = false;
+    try {
+      // Trim before saving
+      if (cache.length > MAX_HISTORY) {
+        cache = cache.slice(-MAX_HISTORY);
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+    } catch { /* localStorage full or disabled */ }
+  }, PERSIST_DEBOUNCE_MS);
+}
+
+function markDirty() {
+  dirty = true;
+  statsDirty = true;
+  statsCache = null;
+  schedulePersist();
+}
+
+// ═══ Public API ═══
+
 /**
- * Save prediction history to localStorage.
- * @param {Array} history
+ * Load prediction history (returns cached in-memory array).
+ * Safe to call frequently — no JSON.parse after first call.
  */
-function saveHistory(history) {
-  try {
-    // Keep only last MAX_HISTORY entries
-    const trimmed = history.slice(-MAX_HISTORY);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-  } catch {
-    // localStorage might be full or disabled
-  }
+export function loadHistory() {
+  ensureLoaded();
+  return cache;
 }
 
 /**
  * Record a new prediction (call when ENTER signal fires).
- * @param {Object} prediction
- * @param {string} prediction.side - 'UP' or 'DOWN'
- * @param {number} prediction.modelProb - model probability at time of signal
- * @param {number} prediction.marketPrice - polymarket price at time of signal
- * @param {number} prediction.btcPrice - BTC price at time of signal
- * @param {number|null} prediction.priceToBeat - settlement target
- * @param {string} prediction.marketSlug - market identifier
+ * Writes to in-memory cache. Persists on debounce timer.
  */
 export function recordPrediction({ side, modelProb, marketPrice, btcPrice, priceToBeat, marketSlug }) {
-  const history = loadHistory();
-  history.push({
-    timestamp: Date.now(),
+  ensureLoaded();
+
+  // ═══ Dedup: Don't record if same market+side recorded in last 30s ═══
+  const now = Date.now();
+  for (let i = cache.length - 1; i >= Math.max(0, cache.length - 3); i--) {
+    const p = cache[i];
+    if (p.marketSlug === marketSlug && p.side === side && now - p.timestamp < 30_000) {
+      return; // Already recorded recently
+    }
+  }
+
+  cache.push({
+    timestamp: now,
     side,
     modelProb,
     marketPrice,
@@ -68,19 +100,24 @@ export function recordPrediction({ side, modelProb, marketPrice, btcPrice, price
     settled: false,
     correct: null,
   });
-  saveHistory(history);
+
+  // Trim in-memory too (don't let it grow unbounded)
+  if (cache.length > MAX_HISTORY + 10) {
+    cache = cache.slice(-MAX_HISTORY);
+  }
+
+  markDirty();
 }
 
 /**
  * Settle a prediction (call when market resolves).
- * @param {string} marketSlug - which market resolved
- * @param {string} result - 'UP' or 'DOWN' (actual outcome)
  */
 export function settlePrediction(marketSlug, result) {
-  const history = loadHistory();
+  ensureLoaded();
   let changed = false;
 
-  for (const pred of history) {
+  for (let i = 0; i < cache.length; i++) {
+    const pred = cache[i];
     if (pred.marketSlug === marketSlug && !pred.settled) {
       pred.settled = true;
       pred.correct = pred.side === result;
@@ -90,140 +127,215 @@ export function settlePrediction(marketSlug, result) {
     }
   }
 
-  if (changed) saveHistory(history);
+  if (changed) markDirty();
 }
 
 /**
  * Get recent accuracy stats and confidence adjustment.
- * @param {number} [window=20] - how many recent settled predictions to consider
- * @returns {{ 
- *   accuracy: number|null, 
- *   total: number, 
- *   correct: number, 
- *   confidenceMultiplier: number,
- *   streak: { type: string, count: number },
- *   label: string 
- * }}
+ * Returns CACHED result if nothing changed since last call.
+ *
+ * v3: Zero intermediate arrays — single pass loop.
+ *
+ * @param {number} [window=20]
  */
 export function getAccuracyStats(window = 20) {
-  const history = loadHistory();
-  const settled = history.filter(p => p.settled && p.correct !== null);
+  ensureLoaded();
 
-  if (settled.length < 5) {
-    // Not enough data to adjust
-    return {
-      accuracy: null,
-      total: settled.length,
-      correct: settled.filter(p => p.correct).length,
-      confidenceMultiplier: 1.0,
-      streak: getStreak(settled),
-      label: `Tracking (${settled.length}/5 minimum)`,
-    };
+  // Return cached stats if nothing changed
+  if (!statsDirty && statsCache) return statsCache;
+
+  // ═══ Single-pass: count settled, correct, streak — NO .filter() ═══
+  let settledCount = 0;
+  let correctCount = 0;
+
+  // We need the last `window` settled predictions
+  // First pass: count total settled
+  for (let i = 0; i < cache.length; i++) {
+    if (cache[i].settled && cache[i].correct !== null) settledCount++;
   }
 
-  // Use last N settled predictions
-  const recent = settled.slice(-window);
-  const correctCount = recent.filter(p => p.correct).length;
-  const accuracy = correctCount / recent.length;
-  const streak = getStreak(recent);
+  if (settledCount < 5) {
+    // Not enough data — count what we have
+    let correctSoFar = 0;
+    for (let i = 0; i < cache.length; i++) {
+      if (cache[i].settled && cache[i].correct === true) correctSoFar++;
+    }
+    const streak = computeStreakFromCache();
+    statsCache = {
+      accuracy: null,
+      total: settledCount,
+      correct: correctSoFar,
+      confidenceMultiplier: 1.0,
+      streak,
+      label: `Tracking (${settledCount}/5 minimum)`,
+    };
+    statsDirty = false;
+    return statsCache;
+  }
 
-  // Confidence adjustment based on accuracy
+  // Second pass: get last `window` settled results (skip non-settled)
+  const windowSize = Math.min(window, settledCount);
+  let skip = settledCount - windowSize;
+  let recentCorrect = 0;
+  let recentTotal = 0;
+
+  // Also track streak from the end
+  let streakType = null; // true = win, false = loss
+  let streakCount = 0;
+  let streakDone = false;
+
+  for (let i = 0; i < cache.length; i++) {
+    const p = cache[i];
+    if (!p.settled || p.correct === null) continue;
+
+    if (skip > 0) { skip--; continue; }
+
+    recentTotal++;
+    if (p.correct) recentCorrect++;
+  }
+
+  // Streak: walk from end
+  for (let i = cache.length - 1; i >= 0 && !streakDone; i--) {
+    const p = cache[i];
+    if (!p.settled || p.correct === null) continue;
+
+    if (streakType === null) {
+      streakType = p.correct;
+      streakCount = 1;
+    } else if (p.correct === streakType) {
+      streakCount++;
+    } else {
+      streakDone = true;
+    }
+  }
+
+  const accuracy = recentTotal > 0 ? recentCorrect / recentTotal : null;
+  const streak = {
+    type: streakType === null ? 'none' : streakType ? 'win' : 'loss',
+    count: streakCount,
+  };
+
+  // Confidence adjustment
   let confidenceMultiplier;
   let label;
+  const pct = accuracy !== null ? (accuracy * 100).toFixed(0) : '0';
 
   if (accuracy >= 0.70) {
-    confidenceMultiplier = 1.15;  // Hot streak — boost
-    label = `🔥 Hot (${(accuracy * 100).toFixed(0)}% of last ${recent.length})`;
+    confidenceMultiplier = 1.15;
+    label = `🔥 Hot (${pct}% of last ${recentTotal})`;
   } else if (accuracy >= 0.55) {
-    confidenceMultiplier = 1.05;  // Good — slight boost
-    label = `✅ Good (${(accuracy * 100).toFixed(0)}% of last ${recent.length})`;
+    confidenceMultiplier = 1.05;
+    label = `✅ Good (${pct}% of last ${recentTotal})`;
   } else if (accuracy >= 0.45) {
-    confidenceMultiplier = 1.0;   // Average — no change
-    label = `➖ Average (${(accuracy * 100).toFixed(0)}% of last ${recent.length})`;
+    confidenceMultiplier = 1.0;
+    label = `➖ Average (${pct}% of last ${recentTotal})`;
   } else if (accuracy >= 0.35) {
-    confidenceMultiplier = 0.85;  // Below average — reduce
-    label = `⚠️ Cold (${(accuracy * 100).toFixed(0)}% of last ${recent.length})`;
+    confidenceMultiplier = 0.85;
+    label = `⚠️ Cold (${pct}% of last ${recentTotal})`;
   } else {
-    confidenceMultiplier = 0.70;  // Very bad — strong reduce
-    label = `❄️ Ice Cold (${(accuracy * 100).toFixed(0)}% of last ${recent.length})`;
+    confidenceMultiplier = 0.70;
+    label = `❄️ Ice Cold (${pct}% of last ${recentTotal})`;
   }
 
   // Streak adjustment
   if (streak.type === 'loss' && streak.count >= 3) {
-    confidenceMultiplier *= 0.90;  // 3+ losses in a row → extra cautious
+    confidenceMultiplier *= 0.90;
     label += ` | ${streak.count}L streak`;
   } else if (streak.type === 'win' && streak.count >= 3) {
-    confidenceMultiplier *= 1.05;  // 3+ wins → slight boost
+    confidenceMultiplier *= 1.05;
     label += ` | ${streak.count}W streak`;
   }
 
-  return {
-    accuracy,
-    total: recent.length,
-    correct: correctCount,
-    confidenceMultiplier: Math.max(0.50, Math.min(1.25, confidenceMultiplier)),
-    streak,
-    label,
-  };
+  // Clamp
+  if (confidenceMultiplier < 0.50) confidenceMultiplier = 0.50;
+  else if (confidenceMultiplier > 1.25) confidenceMultiplier = 1.25;
+
+  statsCache = { accuracy, total: recentTotal, correct: recentCorrect, confidenceMultiplier, streak, label };
+  statsDirty = false;
+  return statsCache;
 }
 
-/**
- * Get current win/loss streak.
- */
-function getStreak(settled) {
-  if (settled.length === 0) return { type: 'none', count: 0 };
+function computeStreakFromCache() {
+  for (let i = cache.length - 1; i >= 0; i--) {
+    const p = cache[i];
+    if (!p.settled || p.correct === null) continue;
 
-  const lastResult = settled[settled.length - 1].correct;
-  let count = 0;
-
-  for (let i = settled.length - 1; i >= 0; i--) {
-    if (settled[i].correct === lastResult) count++;
-    else break;
+    const streakType = p.correct;
+    let count = 1;
+    for (let j = i - 1; j >= 0; j--) {
+      const q = cache[j];
+      if (!q.settled || q.correct === null) continue;
+      if (q.correct === streakType) count++;
+      else break;
+    }
+    return { type: streakType ? 'win' : 'loss', count };
   }
-
-  return { type: lastResult ? 'win' : 'loss', count };
+  return { type: 'none', count: 0 };
 }
 
 /**
- * Check if any unsettled predictions should be settled based on current market.
- * Call this each poll cycle.
- * @param {string} currentSlug - current market slug
- * @param {number} btcPrice - current BTC price
- * @param {number|null} priceToBeat - settlement target
- * @param {number} timeLeftMin - minutes until settlement
+ * Auto-settle old predictions. Called each poll cycle.
+ *
+ * v3 optimization: Early-exit if no unsettled predictions exist.
+ * Uses in-memory cache — zero JSON.parse per call.
  */
 export function autoSettle(currentSlug, btcPrice, priceToBeat, timeLeftMin) {
-  if (timeLeftMin > 0.5) return;  // Only settle when market is about to close
+  if (timeLeftMin > 0.5) return;
 
-  const history = loadHistory();
+  ensureLoaded();
+
+  // ═══ Early exit: check if ANY unsettled predictions exist ═══
+  let hasUnsettled = false;
+  for (let i = 0; i < cache.length; i++) {
+    if (!cache[i].settled) { hasUnsettled = true; break; }
+  }
+  if (!hasUnsettled) return;
+
   let changed = false;
 
-  for (const pred of history) {
-    // Settle predictions from PREVIOUS markets (not current)
-    if (!pred.settled && pred.marketSlug && pred.marketSlug !== currentSlug) {
-      // This prediction was from a different (presumably older) market
-      // We don't know the exact result, so mark as expired
+  for (let i = 0; i < cache.length; i++) {
+    const pred = cache[i];
+    if (pred.settled) continue;
+
+    // Settle predictions from PREVIOUS markets
+    if (pred.marketSlug && pred.marketSlug !== currentSlug) {
       pred.settled = true;
-      pred.correct = null;  // Unknown — expired without settlement data
+      pred.correct = null;
       pred.settledAt = Date.now();
       pred.actualResult = 'expired';
+      changed = true;
+      continue;
+    }
+
+    // Current market at settlement time
+    if (priceToBeat !== null && timeLeftMin <= 0.1 && pred.marketSlug === currentSlug) {
+      const result = btcPrice >= priceToBeat ? 'UP' : 'DOWN';
+      pred.settled = true;
+      pred.correct = pred.side === result;
+      pred.settledAt = Date.now();
+      pred.actualResult = result;
       changed = true;
     }
   }
 
-  // For current market predictions at settlement time
-  if (priceToBeat !== null && timeLeftMin <= 0.1) {
-    const result = btcPrice >= priceToBeat ? 'UP' : 'DOWN';
-    for (const pred of history) {
-      if (!pred.settled && pred.marketSlug === currentSlug) {
-        pred.settled = true;
-        pred.correct = pred.side === result;
-        pred.settledAt = Date.now();
-        pred.actualResult = result;
-        changed = true;
-      }
-    }
-  }
+  if (changed) markDirty();
+}
 
-  if (changed) saveHistory(history);
+/**
+ * Force persist now (call on page unload).
+ */
+export function flushHistory() {
+  if (!dirty || !cache) return;
+  clearTimeout(persistTimer);
+  persistTimer = null;
+  dirty = false;
+  try {
+    if (cache.length > MAX_HISTORY) cache = cache.slice(-MAX_HISTORY);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+  } catch { /* */ }
+}
+
+// ═══ Persist on page unload to avoid data loss ═══
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', flushHistory);
 }

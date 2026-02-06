@@ -3,333 +3,403 @@ import { CONFIG } from '../config.js';
 import { toNumber } from '../utils.js';
 
 /**
- * Real-time Polymarket CLOB WebSocket stream.
- * Connects to wss://ws-subscriptions-clob.polymarket.com/ws/market
+ * ═══ Polymarket CLOB WebSocket stream — v3.1 (Market Switch Fix) ═══
  *
- * ═══ FIX: Clear stale prices when market switches (token IDs change) ═══
+ * v3.1 fixes 3 bugs that caused CLOB WS death on market switch:
+ *
+ * BUG 1: setTokenIds tried to re-subscribe on SAME connection
+ *   → Polymarket CLOB server often rejects/closes re-subscription
+ *   → FIX: Force close old WS + open fresh connection on token change
+ *
+ * BUG 2: connect() guard blocked reconnection
+ *   → `if (wsRef.current.readyState <= 1) return` prevented fresh connect
+ *   → FIX: forceReconnect() kills existing WS first, then connects
+ *
+ * BUG 3: No subscription health check
+ *   → Subscribe could fail silently, no data flows, appears "connected"
+ *   → FIX: Subscription watchdog — if no data 8s after subscribe, reconnect
+ *
+ * Memory optimizations from v3 preserved:
+ *   All WS messages write to refs, flush to state every 500ms.
  */
 
+const HEARTBEAT_DEAD_MS   = 30_000;
+const HEARTBEAT_CHK_MS    = 10_000;
+const RECONNECT_MAX_MS    = 30_000;
+const FLUSH_MS            = 500;
+const SUB_WATCHDOG_MS     = 8_000;  // If no data 8s after subscribe → reconnect
+
+const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV === 'development';
+
+/* ── pure helpers (outside hook) ── */
 function parsePriceLevel(level) {
   if (!level) return null;
-  return {
-    price: toNumber(level.price),
-    size: toNumber(level.size),
-  };
+  return { price: toNumber(level.price), size: toNumber(level.size) };
 }
 
 function bestFromLevels(levels, side) {
   if (!Array.isArray(levels) || levels.length === 0) return null;
   const parsed = levels.map(parsePriceLevel).filter((l) => l && l.price !== null);
   if (parsed.length === 0) return null;
-  if (side === 'bid') return Math.max(...parsed.map((l) => l.price));
-  return Math.min(...parsed.map((l) => l.price));
+  return side === 'bid' ? Math.max(...parsed.map((l) => l.price)) : Math.min(...parsed.map((l) => l.price));
 }
 
 function summarizeLevels(levels, depth = 5) {
-  if (!Array.isArray(levels)) return { best: null, liquidity: 0 };
-  const parsed = levels.slice(0, depth).map(parsePriceLevel).filter(Boolean);
-  const liquidity = parsed.reduce((acc, l) => acc + (l.size ?? 0), 0);
-  return { liquidity };
+  if (!Array.isArray(levels)) return 0;
+  let liq = 0;
+  const len = Math.min(levels.length, depth);
+  for (let i = 0; i < len; i++) {
+    const s = toNumber(levels[i]?.size);
+    if (s) liq += s;
+  }
+  return liq;
 }
 
+const EMPTY_BOOK = { bestBid: null, bestAsk: null, spread: null, bidLiquidity: 0, askLiquidity: 0 };
+
 export function usePolymarketClobStream() {
-  // State
-  const [upPrice, setUpPrice] = useState(null);
-  const [downPrice, setDownPrice] = useState(null);
-  const [upPrevPrice, setUpPrevPrice] = useState(null);
+  /* ── State (flushed from refs at FLUSH_MS interval) ── */
+  const [upPrice, setUpPrice]             = useState(null);
+  const [downPrice, setDownPrice]         = useState(null);
+  const [upPrevPrice, setUpPrevPrice]     = useState(null);
   const [downPrevPrice, setDownPrevPrice] = useState(null);
-  const [orderbook, setOrderbook] = useState({
-    up: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: 0, askLiquidity: 0 },
-    down: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: 0, askLiquidity: 0 },
-  });
-  const [connected, setConnected] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState(null);
+  const [orderbook, setOrderbook]         = useState({ up: EMPTY_BOOK, down: EMPTY_BOOK });
+  const [connected, setConnected]         = useState(false);
+  const [lastUpdate, setLastUpdate]       = useState(null);
 
-  // Refs
-  const wsRef = useRef(null);
-  const reconnectRef = useRef(null);
-  const reconnectMsRef = useRef(500);
-  const pingIntervalRef = useRef(null);
-  const tokenIdsRef = useRef({ up: null, down: null });
-  const subscribedRef = useRef(false);
+  /* ── Refs: written by WS on every tick (no re-render) ── */
+  const upPriceRef    = useRef(null);
+  const downPriceRef  = useRef(null);
+  const upPrevRef     = useRef(null);
+  const downPrevRef   = useRef(null);
+  const orderbookRef  = useRef({ up: { ...EMPTY_BOOK }, down: { ...EMPTY_BOOK } });
+  const dirtyRef      = useRef(false);
+  const flushRef      = useRef(null);
 
-  // ═══ FIX: Clear all stale data from previous market ═══
-  const clearPrices = useCallback(() => {
-    setUpPrice(null);
-    setDownPrice(null);
-    setUpPrevPrice(null);
-    setDownPrevPrice(null);
-    setOrderbook({
-      up: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: 0, askLiquidity: 0 },
-      down: { bestBid: null, bestAsk: null, spread: null, bidLiquidity: 0, askLiquidity: 0 },
-    });
-  }, []);
+  /* ── Infra refs ── */
+  const wsRef              = useRef(null);
+  const reconnectRef       = useRef(null);
+  const reconMsRef         = useRef(500);
+  const pingRef            = useRef(null);
+  const hbRef              = useRef(null);
+  const lastMsgRef         = useRef(Date.now());
+  const tokenIdsRef        = useRef({ up: null, down: null });
+  const subscribedRef      = useRef(false);
+  const subWatchdogRef     = useRef(null);    // NEW: subscription health check
+  const dataReceivedRef    = useRef(false);    // NEW: tracks if real data arrived
+  const intentionalCloseRef = useRef(false);   // NEW: distinguish deliberate vs server close
 
-  // Set token IDs from outside (called when market is discovered via REST)
-  const setTokenIds = useCallback((upTokenId, downTokenId) => {
-    const changed =
-      tokenIdsRef.current.up !== upTokenId || tokenIdsRef.current.down !== downTokenId;
+  /* ── plain helpers ── */
+  function stopPing()     { if (pingRef.current)       { clearInterval(pingRef.current);       pingRef.current       = null; } }
+  function stopHb()       { if (hbRef.current)         { clearInterval(hbRef.current);         hbRef.current         = null; } }
+  function stopFlush()    { if (flushRef.current)      { clearInterval(flushRef.current);      flushRef.current      = null; } }
+  function stopWatchdog() { if (subWatchdogRef.current) { clearTimeout(subWatchdogRef.current); subWatchdogRef.current = null; } }
+  function stopTimers()   { stopPing(); stopHb(); stopWatchdog(); }
 
-    if (changed) {
-      console.log('[CLOB WS] 🔄 Token IDs changed, clearing stale prices & re-subscribing');
+  function clearPrices() {
+    upPriceRef.current = null; downPriceRef.current = null;
+    upPrevRef.current = null; downPrevRef.current = null;
+    orderbookRef.current = { up: { ...EMPTY_BOOK }, down: { ...EMPTY_BOOK } };
+    dirtyRef.current = true;
+  }
 
-      // ═══ FIX: Clear stale prices from old market ═══
-      clearPrices();
+  /**
+   * ═══ FIX 3: Subscription watchdog ═══
+   * After subscribe, wait 8s. If no real data (book/price_change/last_trade)
+   * arrives, the subscription failed silently → force reconnect.
+   */
+  function startSubWatchdog() {
+    stopWatchdog();
+    dataReceivedRef.current = false;
 
-      tokenIdsRef.current = { up: upTokenId, down: downTokenId };
-      subscribedRef.current = false;
-
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        subscribe(wsRef.current);
+    subWatchdogRef.current = setTimeout(() => {
+      subWatchdogRef.current = null;
+      if (!dataReceivedRef.current && subscribedRef.current) {
+        console.warn('[CLOB WS] ⚠️ No data 8s after subscribe — forcing reconnect...');
+        forceReconnect();
       }
-    }
-  }, [clearPrices]);
+    }, SUB_WATCHDOG_MS);
+  }
 
   function subscribe(ws) {
     const { up, down } = tokenIdsRef.current;
     if (!up && !down) return;
-
-    const assetIds = [up, down].filter(Boolean);
+    const ids = [up, down].filter(Boolean);
     try {
-      ws.send(
-        JSON.stringify({
-          assets_ids: assetIds,
-          type: 'market',
-        })
-      );
+      ws.send(JSON.stringify({ assets_ids: ids, type: 'market' }));
       subscribedRef.current = true;
-      console.log('[CLOB WS] ✅ Subscribed to', assetIds.length, 'tokens');
-    } catch {
-      /* ignore */
+      dataReceivedRef.current = false;
+      startSubWatchdog();
+      if (IS_DEV) console.log('[CLOB WS] 📡 Subscribed to', ids.length, 'tokens — watchdog started');
+    } catch (err) {
+      console.warn('[CLOB WS] ❌ Subscribe send failed:', err.message);
+      subscribedRef.current = false;
+      // Retry via force reconnect
+      forceReconnect();
     }
   }
 
-  function startPing(ws) {
-    stopPing();
-    pingIntervalRef.current = setInterval(() => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.send('PING');
-        } catch {
-          /* ignore */
-        }
-      }
-    }, CONFIG.polymarket.clobPingIntervalMs || 10_000);
-  }
-
-  function stopPing() {
-    if (pingIntervalRef.current) {
-      clearInterval(pingIntervalRef.current);
-      pingIntervalRef.current = null;
-    }
-  }
-
+  /* ── WS event handlers → write to REFS only ── */
   function handleBookEvent(data) {
+    dataReceivedRef.current = true;
+    stopWatchdog();
+
     const assetId = data.asset_id;
     const { up, down } = tokenIdsRef.current;
-
     const bids = Array.isArray(data.bids) ? data.bids : [];
     const asks = Array.isArray(data.asks) ? data.asks : [];
-
     const bestBid = bestFromLevels(bids, 'bid');
     const bestAsk = bestFromLevels(asks, 'ask');
     const spread = bestBid !== null && bestAsk !== null ? bestAsk - bestBid : null;
-    const bidSummary = summarizeLevels(bids);
-    const askSummary = summarizeLevels(asks);
-
-    const bookData = {
-      bestBid,
-      bestAsk,
-      spread,
-      bidLiquidity: bidSummary.liquidity,
-      askLiquidity: askSummary.liquidity,
-    };
+    const bookData = { bestBid, bestAsk, spread, bidLiquidity: summarizeLevels(bids), askLiquidity: summarizeLevels(asks) };
 
     if (assetId === up) {
-      setOrderbook((prev) => ({ ...prev, up: bookData }));
+      orderbookRef.current = { ...orderbookRef.current, up: bookData };
       if (bestBid !== null && bestAsk !== null) {
-        const mid = (bestBid + bestAsk) / 2;
-        setUpPrice((prev) => {
-          setUpPrevPrice(prev);
-          return mid;
-        });
+        upPrevRef.current = upPriceRef.current;
+        upPriceRef.current = (bestBid + bestAsk) / 2;
       }
     } else if (assetId === down) {
-      setOrderbook((prev) => ({ ...prev, down: bookData }));
+      orderbookRef.current = { ...orderbookRef.current, down: bookData };
       if (bestBid !== null && bestAsk !== null) {
-        const mid = (bestBid + bestAsk) / 2;
-        setDownPrice((prev) => {
-          setDownPrevPrice(prev);
-          return mid;
-        });
+        downPrevRef.current = downPriceRef.current;
+        downPriceRef.current = (bestBid + bestAsk) / 2;
       }
     }
-
-    setLastUpdate(Date.now());
+    dirtyRef.current = true;
   }
 
   function handlePriceChange(data) {
+    dataReceivedRef.current = true;
+    stopWatchdog();
+
     const changes = Array.isArray(data.price_changes) ? data.price_changes : [];
     const { up, down } = tokenIdsRef.current;
-
     for (const change of changes) {
       const assetId = change.asset_id;
       const bestBid = toNumber(change.best_bid);
       const bestAsk = toNumber(change.best_ask);
-
       if (bestBid !== null && bestAsk !== null) {
         const mid = (bestBid + bestAsk) / 2;
-
         if (assetId === up) {
-          setUpPrice((prev) => {
-            setUpPrevPrice(prev);
-            return mid;
-          });
-          setOrderbook((prev) => ({
-            ...prev,
-            up: {
-              ...prev.up,
-              bestBid,
-              bestAsk,
-              spread: bestAsk - bestBid,
-            },
-          }));
+          upPrevRef.current = upPriceRef.current;
+          upPriceRef.current = mid;
+          const ob = orderbookRef.current;
+          orderbookRef.current = { ...ob, up: { ...ob.up, bestBid, bestAsk, spread: bestAsk - bestBid } };
         } else if (assetId === down) {
-          setDownPrice((prev) => {
-            setDownPrevPrice(prev);
-            return mid;
-          });
-          setOrderbook((prev) => ({
-            ...prev,
-            down: {
-              ...prev.down,
-              bestBid,
-              bestAsk,
-              spread: bestAsk - bestBid,
-            },
-          }));
+          downPrevRef.current = downPriceRef.current;
+          downPriceRef.current = mid;
+          const ob = orderbookRef.current;
+          orderbookRef.current = { ...ob, down: { ...ob.down, bestBid, bestAsk, spread: bestAsk - bestBid } };
         }
       }
     }
-
-    setLastUpdate(Date.now());
+    dirtyRef.current = true;
   }
 
   function handleLastTradePrice(data) {
+    dataReceivedRef.current = true;
+    stopWatchdog();
+
     const assetId = data.asset_id;
-    const price = toNumber(data.price);
+    const p = toNumber(data.price);
     const { up, down } = tokenIdsRef.current;
-
-    if (price === null) return;
-
+    if (p === null) return;
     if (assetId === up) {
-      setUpPrice((prev) => {
-        setUpPrevPrice(prev);
-        return price;
-      });
+      upPrevRef.current = upPriceRef.current;
+      upPriceRef.current = p;
     } else if (assetId === down) {
-      setDownPrice((prev) => {
-        setDownPrevPrice(prev);
-        return price;
-      });
+      downPrevRef.current = downPriceRef.current;
+      downPriceRef.current = p;
     }
-
-    setLastUpdate(Date.now());
+    dirtyRef.current = true;
   }
 
+  /* ── Flush timer: ref → state (single batch) ── */
+  useEffect(() => {
+    flushRef.current = setInterval(() => {
+      if (!dirtyRef.current) return;
+      dirtyRef.current = false;
+      setUpPrice(upPriceRef.current);
+      setDownPrice(downPriceRef.current);
+      setUpPrevPrice(upPrevRef.current);
+      setDownPrevPrice(downPrevRef.current);
+      setOrderbook(orderbookRef.current);
+      setLastUpdate(Date.now());
+    }, FLUSH_MS);
+    return () => stopFlush();
+  }, []);
+
+  /* ── connect (opens NEW WebSocket) ── */
   const connect = useCallback(() => {
-    const url = CONFIG.polymarket.clobWsUrl;
+    const url = CONFIG.polymarket?.clobWsUrl;
     if (!url) return;
 
-    if (wsRef.current && wsRef.current.readyState <= 1) return;
+    // ═══ FIX 2: Smarter guard — only skip if truly connected ═══
+    const existingWs = wsRef.current;
+    if (existingWs) {
+      if (existingWs.readyState === WebSocket.OPEN) return;       // Already connected
+      if (existingWs.readyState === WebSocket.CONNECTING) return;  // Still opening
+      wsRef.current = null; // CLOSING or CLOSED — clear stale ref
+    }
 
     try {
       const ws = new WebSocket(url);
       wsRef.current = ws;
       subscribedRef.current = false;
+      dataReceivedRef.current = false;
 
       ws.onopen = () => {
+        if (IS_DEV) console.log('[CLOB WS] ✅ Connected (fresh)');
         setConnected(true);
-        reconnectMsRef.current = 500;
-        startPing(ws);
+        reconMsRef.current = 500;
+        lastMsgRef.current = Date.now();
+        intentionalCloseRef.current = false;
 
-        // Subscribe if we already have token IDs
+        // Ping
+        stopPing();
+        pingRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            try { ws.send('PING'); } catch (_e) { /* */ }
+          }
+        }, CONFIG.polymarket?.clobPingIntervalMs || 10_000);
+
+        // Heartbeat
+        stopHb();
+        hbRef.current = setInterval(() => {
+          if (Date.now() - lastMsgRef.current > HEARTBEAT_DEAD_MS) {
+            console.warn('[CLOB WS] ⚠️ Silent — forcing reconnect');
+            forceReconnect();
+          }
+        }, HEARTBEAT_CHK_MS);
+
+        // Subscribe to current tokens
         if (tokenIdsRef.current.up || tokenIdsRef.current.down) {
           subscribe(ws);
         }
       };
 
       ws.onmessage = (evt) => {
+        lastMsgRef.current = Date.now();
         try {
           const raw = evt.data;
           if (typeof raw === 'string' && (raw === 'PONG' || raw === '')) return;
-
           const msg = JSON.parse(raw);
-          const eventType = msg.event_type;
-
-          switch (eventType) {
-            case 'book':
-              handleBookEvent(msg);
-              break;
-            case 'price_change':
-              handlePriceChange(msg);
-              break;
-            case 'last_trade_price':
-              handleLastTradePrice(msg);
-              break;
-            default:
-              break;
+          switch (msg.event_type) {
+            case 'book':             handleBookEvent(msg);       break;
+            case 'price_change':     handlePriceChange(msg);     break;
+            case 'last_trade_price': handleLastTradePrice(msg);  break;
+            default: break;
           }
-        } catch {
-          /* ignore parse errors */
-        }
+        } catch (_e) { /* */ }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (evt) => {
+        if (IS_DEV) console.log(`[CLOB WS] ❌ Closed (code: ${evt.code}, intentional: ${intentionalCloseRef.current})`);
         setConnected(false);
         wsRef.current = null;
         subscribedRef.current = false;
-        stopPing();
-        const wait = reconnectMsRef.current;
-        reconnectMsRef.current = Math.min(15000, Math.floor(wait * 1.5));
+        stopTimers();
+
+        // ═══ FIX 1: Skip auto-reconnect if WE closed it (forceReconnect handles its own) ═══
+        if (intentionalCloseRef.current) {
+          intentionalCloseRef.current = false;
+          return;
+        }
+
+        const wait = reconMsRef.current;
+        reconMsRef.current = Math.min(RECONNECT_MAX_MS, Math.floor(wait * 2));
         reconnectRef.current = setTimeout(connect, wait);
       };
 
-      ws.onerror = () => {
-        try {
-          ws.close();
-        } catch {
-          /* ignore */
-        }
-      };
-    } catch {
-      const wait = reconnectMsRef.current;
-      reconnectMsRef.current = Math.min(15000, Math.floor(wait * 1.5));
+      ws.onerror = () => { try { ws.close(); } catch (_e) { /* */ } };
+    } catch (_e) {
+      const wait = reconMsRef.current;
+      reconMsRef.current = Math.min(RECONNECT_MAX_MS, Math.floor(wait * 2));
       reconnectRef.current = setTimeout(connect, wait);
     }
   }, []);
 
+  /**
+   * ═══ FIX 1: Force reconnect — kill old WS, open fresh ═══
+   * Used by: setTokenIds, heartbeat timeout, subscription watchdog
+   */
+  function forceReconnect() {
+    if (IS_DEV) console.log('[CLOB WS] 🔄 Force reconnect...');
+
+    clearTimeout(reconnectRef.current);
+    reconnectRef.current = null;
+
+    // Kill existing connection cleanly
+    const ws = wsRef.current;
+    if (ws) {
+      intentionalCloseRef.current = true;
+      stopTimers();
+      try { ws.close(); } catch (_e) { /* */ }
+      wsRef.current = null;
+    }
+
+    // Reset (deliberate reconnect = not a failure)
+    reconMsRef.current = 500;
+    subscribedRef.current = false;
+    setConnected(false);
+
+    // Short delay to let server process close, then fresh connect
+    reconnectRef.current = setTimeout(connect, 300);
+  }
+
+  /**
+   * ═══ FIX 1: setTokenIds — force fresh connection ═══
+   * Old: re-subscribe on same WS → server rejects → WS dies
+   * New: close old WS → open fresh → subscribe on new connection
+   */
+  const setTokenIds = useCallback((upTokenId, downTokenId) => {
+    const changed = tokenIdsRef.current.up !== upTokenId || tokenIdsRef.current.down !== downTokenId;
+    if (!changed) return;
+
+    console.log('[CLOB WS] 🔄 Token IDs changed → force fresh connection');
+    tokenIdsRef.current = { up: upTokenId, down: downTokenId };
+    clearPrices();
+    forceReconnect();
+  }, []);
+
+  // Visibility recovery
+  useEffect(() => {
+    const h = () => {
+      if (document.visibilityState !== 'visible') return;
+      const ws = wsRef.current;
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        if (IS_DEV) console.log('[CLOB WS] 👁️ Tab visible — reconnecting…');
+        clearTimeout(reconnectRef.current);
+        reconMsRef.current = 500;
+        if (ws && ws.readyState === WebSocket.CONNECTING) {
+          intentionalCloseRef.current = true;
+          try { ws.close(); } catch (_e) { /* */ }
+          wsRef.current = null;
+        }
+        connect();
+      } else {
+        lastMsgRef.current = Date.now();
+        if (!subscribedRef.current && (tokenIdsRef.current.up || tokenIdsRef.current.down)) {
+          subscribe(ws);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', h);
+    return () => document.removeEventListener('visibilitychange', h);
+  }, [connect]);
+
+  // Initial connect
   useEffect(() => {
     connect();
     return () => {
+      intentionalCloseRef.current = true;
       clearTimeout(reconnectRef.current);
-      stopPing();
-      try {
-        wsRef.current?.close();
-      } catch {
-        /* ignore */
-      }
+      stopTimers();
+      stopFlush();
+      try { wsRef.current?.close(); } catch (_e) { /* */ }
     };
   }, [connect]);
 
-  return {
-    upPrice,
-    downPrice,
-    upPrevPrice,
-    downPrevPrice,
-    orderbook,
-    connected,
-    lastUpdate,
-    setTokenIds,
-  };
+  return { upPrice, downPrice, upPrevPrice, downPrevPrice, orderbook, connected, lastUpdate, setTokenIds };
 }

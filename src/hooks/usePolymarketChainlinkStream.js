@@ -1,84 +1,132 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CONFIG } from '../config.js';
+import { useThrottledPricePair } from './useThrottledState.js';
+
+/**
+ * ═══ Polymarket Chainlink LiveData WS — v3 (Memory Optimized) ═══
+ *
+ * Optimizations:
+ * - Throttled price state (2x/sec flush)
+ * - Ping 15s · heartbeat 30s · backoff 30s max
+ * - Visibility recovery · conditional logging
+ */
+
+const PING_MS           = 15_000;
+const HEARTBEAT_DEAD_MS = 30_000;
+const HEARTBEAT_CHK_MS  = 10_000;
+const RECONNECT_MAX_MS  = 30_000;
+const THROTTLE_MS       = 500;
+
+const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV === 'development';
 
 export function usePolymarketChainlinkStream() {
-  const [price, setPrice] = useState(null);
-  const [prevPrice, setPrevPrice] = useState(null);
+  const { price, prevPrice, pushPrice } = useThrottledPricePair(THROTTLE_MS);
   const [connected, setConnected] = useState(false);
-  const wsRef = useRef(null);
+
+  const wsRef        = useRef(null);
   const reconnectRef = useRef(null);
-  const reconnectMsRef = useRef(500);
+  const reconMsRef   = useRef(500);
+  const pingRef      = useRef(null);
+  const hbRef        = useRef(null);
+  const lastMsgRef   = useRef(Date.now());
+
+  function stopPing() { if (pingRef.current) { clearInterval(pingRef.current); pingRef.current = null; } }
+  function stopHb()   { if (hbRef.current)   { clearInterval(hbRef.current);  hbRef.current   = null; } }
+  function stopAll()  { stopPing(); stopHb(); }
 
   const connect = useCallback(() => {
+    const url = CONFIG.polymarket?.liveDataWsUrl;
+    if (!url) return;
     if (wsRef.current && wsRef.current.readyState <= 1) return;
 
     try {
-      const ws = new WebSocket(CONFIG.polymarket.liveDataWsUrl);
+      const ws = new WebSocket(url);
       wsRef.current = ws;
 
       ws.onopen = () => {
+        if (IS_DEV) console.log('[Polymarket WS] ✅ Connected');
         setConnected(true);
-        reconnectMsRef.current = 500;
+        reconMsRef.current = 500;
+        lastMsgRef.current = Date.now();
+
+        // Ping
+        stopPing();
+        pingRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            try { ws.send(JSON.stringify({ action: 'ping' })); } catch (_e) { /* */ }
+          }
+        }, PING_MS);
+
+        // Heartbeat
+        stopHb();
+        hbRef.current = setInterval(() => {
+          if (Date.now() - lastMsgRef.current > HEARTBEAT_DEAD_MS) {
+            console.warn('[Polymarket WS] ⚠️ Silent — forcing reconnect');
+            try { ws.close(); } catch (_e) { /* */ }
+          }
+        }, HEARTBEAT_CHK_MS);
+
+        // Subscribe
         try {
-          ws.send(
-            JSON.stringify({
-              action: 'subscribe',
-              subscriptions: [{ topic: 'crypto_prices_chainlink', type: '*', filters: '' }],
-            })
-          );
-        } catch {
-          /* ignore */
-        }
+          ws.send(JSON.stringify({
+            action: 'subscribe',
+            subscriptions: [{ topic: 'crypto_prices_chainlink', type: '*', filters: '' }],
+          }));
+        } catch (_e) { /* */ }
       };
 
       ws.onmessage = (evt) => {
+        lastMsgRef.current = Date.now();
         try {
           const data = JSON.parse(evt.data);
           if (!data || data.topic !== 'crypto_prices_chainlink') return;
-
-          const payload =
-            typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload || {};
-          const symbol = String(
-            payload.symbol || payload.pair || payload.ticker || ''
-          ).toLowerCase();
-          if (!symbol.includes('btc')) return;
-
+          const payload = typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload || {};
+          const sym = String(payload.symbol || payload.pair || payload.ticker || '').toLowerCase();
+          if (!sym.includes('btc')) return;
           const p = Number(payload.value ?? payload.price ?? payload.current ?? payload.data);
           if (!Number.isFinite(p)) return;
-
-          setPrice((prev) => {
-            setPrevPrice(prev);
-            return p;
-          });
-        } catch {
-          /* ignore */
-        }
+          pushPrice(p);   // ← ref only, no re-render
+        } catch (_e) { /* */ }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (evt) => {
+        if (IS_DEV) console.log(`[Polymarket WS] ❌ Disconnected (code: ${evt.code})`);
         setConnected(false);
         wsRef.current = null;
-        const wait = reconnectMsRef.current;
-        reconnectMsRef.current = Math.min(10000, Math.floor(wait * 1.5));
+        stopAll();
+        const wait = reconMsRef.current;
+        reconMsRef.current = Math.min(RECONNECT_MAX_MS, Math.floor(wait * 2));
         reconnectRef.current = setTimeout(connect, wait);
       };
 
-      ws.onerror = () => {
-        try { ws.close(); } catch { /* ignore */ }
-      };
-    } catch {
-      const wait = reconnectMsRef.current;
-      reconnectMsRef.current = Math.min(10000, Math.floor(wait * 1.5));
+      ws.onerror = () => { try { ws.close(); } catch (_e) { /* */ } };
+    } catch (_e) {
+      const wait = reconMsRef.current;
+      reconMsRef.current = Math.min(RECONNECT_MAX_MS, Math.floor(wait * 2));
       reconnectRef.current = setTimeout(connect, wait);
     }
-  }, []);
+  }, [pushPrice]);
+
+  useEffect(() => {
+    const h = () => {
+      if (document.visibilityState !== 'visible') return;
+      const ws = wsRef.current;
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        if (IS_DEV) console.log('[Polymarket WS] 👁️ Tab visible — reconnecting…');
+        clearTimeout(reconnectRef.current);
+        reconMsRef.current = 500;
+        connect();
+      } else {
+        lastMsgRef.current = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', h);
+    return () => document.removeEventListener('visibilitychange', h);
+  }, [connect]);
 
   useEffect(() => {
     connect();
-    return () => {
-      clearTimeout(reconnectRef.current);
-      try { wsRef.current?.close(); } catch { /* ignore */ }
-    };
+    return () => { clearTimeout(reconnectRef.current); stopAll(); try { wsRef.current?.close(); } catch (_e) { /* */ } };
   }, [connect]);
 
   return { price, prevPrice, connected };

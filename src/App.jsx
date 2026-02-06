@@ -9,6 +9,7 @@ import TAIndicators from './components/TAIndicators.jsx';
 import PredictPanel from './components/PredictPanel.jsx';
 import PolymarketPanel from './components/PolymarketPanel.jsx';
 import EdgePanel from './components/EdgePanel.jsx';
+import MLPanel from './components/MlPanel.jsx';
 import SessionInfo from './components/SessionInfo.jsx';
 
 function StatusDot({ connected, label }) {
@@ -85,6 +86,8 @@ export default function App() {
           <span style={{ color: 'var(--text-dim)' }}>|</span>
           <StatusDot connected={clobWs.connected} label={`CLOB ${clobWs.connected ? 'WS' : 'REST'}`} />
           <span style={{ color: 'var(--text-dim)' }}>|</span>
+          <StatusDot connected={data?.ml?.status === 'ready'} label="ML" />
+          <span style={{ color: 'var(--text-dim)' }}>|</span>
           <StatusDot connected={!error} label="Data" />
         </div>
       </header>
@@ -135,7 +138,10 @@ export default function App() {
           <PolymarketPanel data={data} clobWsConnected={clobWs.connected} />
           <EdgePanel data={data} />
 
-          {/* Row 4: Session (full width) */}
+          {/* Row 4: ML Engine (full width) */}
+          <MLPanel data={data} />
+
+          {/* Row 5: Session (full width) */}
           <SessionInfo />
         </div>
       )}
