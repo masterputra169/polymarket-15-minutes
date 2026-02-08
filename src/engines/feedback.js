@@ -1,32 +1,30 @@
 /**
- * ═══ Prediction Feedback Tracker v3 (Memory Optimized) ═══
+ * ═══ Prediction Feedback Tracker v3.2 (Slug Cleanup) ═══
  *
- * Performance problems in v1:
- *   1. loadHistory() called 2-3x per poll → JSON.parse every 5s = GC pressure
- *   2. getAccuracyStats() creates 3 intermediate arrays (.filter, .filter, .slice)
- *   3. autoSettle() re-parses entire history even when nothing to settle
- *   4. saveHistory() JSON.stringify on every tiny change
+ * v3.2 adds:
+ *   1. purgeStaleMarkets() — remove predictions from old slugs
+ *   2. onMarketSwitch()    — cleanup trigger for market transitions
+ *   3. Age-based expiry    — auto-delete predictions older than 24h
+ *   4. getStorageStats()   — monitor what's stored
  *
- * v3 fixes (master-backend caching patterns):
- *   1. IN-MEMORY CACHE: Parse localStorage ONCE, work from memory
- *   2. DIRTY FLAG: Only write to localStorage when data actually changed
- *   3. DEBOUNCED PERSIST: Batch writes, save at most 1x/5s
- *   4. PRE-COMPUTED STATS: Cache accuracy stats, invalidate on settle
- *   5. ZERO INTERMEDIATE ARRAYS: Loop-based stats computation
+ * Performance from v3 preserved:
+ *   In-memory cache, debounced persist, cached stats, zero JSON.parse per poll
  */
 
 const STORAGE_KEY = 'btc_prediction_tracker';
 const MAX_HISTORY = 30;
-const PERSIST_DEBOUNCE_MS = 5_000; // Max 1 write per 5 seconds
+const PERSIST_DEBOUNCE_MS = 5_000;
+const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MAX_SLUGS_KEPT = 5;               // Keep last 5 markets, purge older
 
-// ═══ In-memory state (single source of truth) ═══
-let cache = null;        // Array — loaded once from localStorage
-let dirty = false;       // Needs localStorage write?
-let persistTimer = null; // Debounce timer for saves
-let statsCache = null;   // Cached getAccuracyStats result
-let statsDirty = true;   // Stats need recomputation?
+// ═══ In-memory state ═══
+let cache = null;
+let dirty = false;
+let persistTimer = null;
+let statsCache = null;
+let statsDirty = true;
 
-// ═══ Internal: Load once, cache forever ═══
+// ═══ Internal helpers ═══
 
 function ensureLoaded() {
   if (cache !== null) return;
@@ -34,22 +32,29 @@ function ensureLoaded() {
     const raw = localStorage.getItem(STORAGE_KEY);
     cache = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(cache)) cache = [];
+
+    // Auto-purge on load: remove expired entries
+    const cutoff = Date.now() - MAX_AGE_MS;
+    const before = cache.length;
+    cache = cache.filter(p => p.timestamp > cutoff);
+    if (cache.length < before) {
+      dirty = true;
+      schedulePersist();
+      console.log(`[Feedback] 🧹 Purged ${before - cache.length} expired predictions on load`);
+    }
   } catch {
     cache = [];
   }
 }
 
 function schedulePersist() {
-  if (persistTimer) return; // Already scheduled
+  if (persistTimer) return;
   persistTimer = setTimeout(() => {
     persistTimer = null;
     if (!dirty) return;
     dirty = false;
     try {
-      // Trim before saving
-      if (cache.length > MAX_HISTORY) {
-        cache = cache.slice(-MAX_HISTORY);
-      }
+      if (cache.length > MAX_HISTORY) cache = cache.slice(-MAX_HISTORY);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
     } catch { /* localStorage full or disabled */ }
   }, PERSIST_DEBOUNCE_MS);
@@ -62,31 +67,182 @@ function markDirty() {
   schedulePersist();
 }
 
-// ═══ Public API ═══
+// ═══ NEW: Slug-aware cleanup ═══
 
 /**
- * Load prediction history (returns cached in-memory array).
- * Safe to call frequently — no JSON.parse after first call.
+ * Get unique slugs in order of appearance (newest last).
  */
+function getUniqueSlugs() {
+  ensureLoaded();
+  const seen = new Set();
+  const slugs = [];
+  // Walk from newest to oldest
+  for (let i = cache.length - 1; i >= 0; i--) {
+    const s = cache[i].marketSlug;
+    if (s && !seen.has(s)) {
+      seen.add(s);
+      slugs.unshift(s); // oldest first
+    }
+  }
+  return slugs;
+}
+
+/**
+ * ═══ Purge predictions from stale (old) market slugs ═══
+ *
+ * Keeps only the last N slugs' predictions.
+ * Call after market transitions to prevent unbounded growth.
+ *
+ * @param {number} keepSlugs - How many recent slugs to keep (default: 5)
+ * @returns {{ removed: number, slugsPurged: string[] }}
+ */
+export function purgeStaleMarkets(keepSlugs = MAX_SLUGS_KEPT) {
+  ensureLoaded();
+
+  const slugs = getUniqueSlugs();
+  if (slugs.length <= keepSlugs) return { removed: 0, slugsPurged: [] };
+
+  // Slugs to remove (oldest ones beyond keepSlugs)
+  const staleSlugs = new Set(slugs.slice(0, slugs.length - keepSlugs));
+  const before = cache.length;
+
+  cache = cache.filter(p => !staleSlugs.has(p.marketSlug));
+
+  const removed = before - cache.length;
+  if (removed > 0) {
+    markDirty();
+    console.log(`[Feedback] 🧹 Purged ${removed} predictions from ${staleSlugs.size} old markets`);
+  }
+
+  return { removed, slugsPurged: [...staleSlugs] };
+}
+
+/**
+ * ═══ Remove all predictions for a specific slug ═══
+ *
+ * @param {string} slug - Market slug to remove
+ * @returns {number} Number of predictions removed
+ */
+export function purgeSlug(slug) {
+  ensureLoaded();
+  const before = cache.length;
+  cache = cache.filter(p => p.marketSlug !== slug);
+  const removed = before - cache.length;
+  if (removed > 0) markDirty();
+  return removed;
+}
+
+/**
+ * ═══ Remove predictions older than maxAge ═══
+ *
+ * @param {number} maxAgeMs - Max age in milliseconds (default: 24h)
+ * @returns {number} Number of predictions removed
+ */
+export function purgeOlderThan(maxAgeMs = MAX_AGE_MS) {
+  ensureLoaded();
+  const cutoff = Date.now() - maxAgeMs;
+  const before = cache.length;
+  cache = cache.filter(p => p.timestamp > cutoff);
+  const removed = before - cache.length;
+  if (removed > 0) markDirty();
+  return removed;
+}
+
+/**
+ * ═══ Called on market switch — performs targeted cleanup ═══
+ *
+ * This is the main cleanup trigger. Call from useMarketData
+ * when slug changes.
+ *
+ * Actions:
+ * 1. Settle unsettled predictions from old market as "expired"
+ * 2. Purge old slugs beyond MAX_SLUGS_KEPT
+ * 3. Purge entries older than 24h
+ *
+ * @param {string} oldSlug - Previous market slug
+ * @param {string} newSlug - New market slug
+ */
+export function onMarketSwitch(oldSlug, newSlug) {
+  ensureLoaded();
+  if (!oldSlug || oldSlug === newSlug) return;
+
+  let changed = false;
+  const now = Date.now();
+
+  // 1. Settle unsettled predictions from old market
+  for (let i = 0; i < cache.length; i++) {
+    const p = cache[i];
+    if (p.marketSlug === oldSlug && !p.settled) {
+      p.settled = true;
+      p.correct = null; // Unknown — market ended
+      p.settledAt = now;
+      p.actualResult = 'expired';
+      changed = true;
+    }
+  }
+
+  // 2. Purge old slugs
+  purgeStaleMarkets(MAX_SLUGS_KEPT);
+
+  // 3. Purge entries older than 24h
+  const cutoff = now - MAX_AGE_MS;
+  const before = cache.length;
+  cache = cache.filter(p => p.timestamp > cutoff);
+  if (cache.length < before) changed = true;
+
+  if (changed) markDirty();
+
+  console.log(`[Feedback] 🔄 Market switch: "${oldSlug.slice(-20)}" → "${newSlug.slice(-20)}" | ${cache.length} predictions kept`);
+}
+
+/**
+ * ═══ Get storage stats for monitoring ═══
+ */
+export function getStorageStats() {
+  ensureLoaded();
+  const slugs = getUniqueSlugs();
+  const settled = cache.filter(p => p.settled).length;
+  const unsettled = cache.length - settled;
+  const oldestMs = cache.length > 0 ? Date.now() - cache[0].timestamp : 0;
+
+  return {
+    total: cache.length,
+    settled,
+    unsettled,
+    slugs: slugs.length,
+    slugList: slugs.slice(-5), // Last 5
+    oldestMinutesAgo: Math.floor(oldestMs / 60_000),
+    storageBytesEstimate: JSON.stringify(cache).length,
+  };
+}
+
+/**
+ * ═══ Clear ALL prediction data ═══
+ * Nuclear option — use for debugging.
+ */
+export function clearAll() {
+  cache = [];
+  markDirty();
+  // Also persist immediately
+  try { localStorage.removeItem(STORAGE_KEY); } catch { /* */ }
+  console.log('[Feedback] 🗑️ All prediction data cleared');
+}
+
+// ═══ Core API (unchanged from v3) ═══
+
 export function loadHistory() {
   ensureLoaded();
   return cache;
 }
 
-/**
- * Record a new prediction (call when ENTER signal fires).
- * Writes to in-memory cache. Persists on debounce timer.
- */
 export function recordPrediction({ side, modelProb, marketPrice, btcPrice, priceToBeat, marketSlug }) {
   ensureLoaded();
 
-  // ═══ Dedup: Don't record if same market+side recorded in last 30s ═══
+  // Dedup: same market+side in last 30s
   const now = Date.now();
   for (let i = cache.length - 1; i >= Math.max(0, cache.length - 3); i--) {
     const p = cache[i];
-    if (p.marketSlug === marketSlug && p.side === side && now - p.timestamp < 30_000) {
-      return; // Already recorded recently
-    }
+    if (p.marketSlug === marketSlug && p.side === side && now - p.timestamp < 30_000) return;
   }
 
   cache.push({
@@ -101,21 +257,13 @@ export function recordPrediction({ side, modelProb, marketPrice, btcPrice, price
     correct: null,
   });
 
-  // Trim in-memory too (don't let it grow unbounded)
-  if (cache.length > MAX_HISTORY + 10) {
-    cache = cache.slice(-MAX_HISTORY);
-  }
-
+  if (cache.length > MAX_HISTORY + 10) cache = cache.slice(-MAX_HISTORY);
   markDirty();
 }
 
-/**
- * Settle a prediction (call when market resolves).
- */
 export function settlePrediction(marketSlug, result) {
   ensureLoaded();
   let changed = false;
-
   for (let i = 0; i < cache.length; i++) {
     const pred = cache[i];
     if (pred.marketSlug === marketSlug && !pred.settled) {
@@ -126,36 +274,19 @@ export function settlePrediction(marketSlug, result) {
       changed = true;
     }
   }
-
   if (changed) markDirty();
 }
 
-/**
- * Get recent accuracy stats and confidence adjustment.
- * Returns CACHED result if nothing changed since last call.
- *
- * v3: Zero intermediate arrays — single pass loop.
- *
- * @param {number} [window=20]
- */
 export function getAccuracyStats(window = 20) {
   ensureLoaded();
-
-  // Return cached stats if nothing changed
   if (!statsDirty && statsCache) return statsCache;
 
-  // ═══ Single-pass: count settled, correct, streak — NO .filter() ═══
   let settledCount = 0;
-  let correctCount = 0;
-
-  // We need the last `window` settled predictions
-  // First pass: count total settled
   for (let i = 0; i < cache.length; i++) {
     if (cache[i].settled && cache[i].correct !== null) settledCount++;
   }
 
   if (settledCount < 5) {
-    // Not enough data — count what we have
     let correctSoFar = 0;
     for (let i = 0; i < cache.length; i++) {
       if (cache[i].settled && cache[i].correct === true) correctSoFar++;
@@ -173,80 +304,45 @@ export function getAccuracyStats(window = 20) {
     return statsCache;
   }
 
-  // Second pass: get last `window` settled results (skip non-settled)
   const windowSize = Math.min(window, settledCount);
   let skip = settledCount - windowSize;
   let recentCorrect = 0;
   let recentTotal = 0;
-
-  // Also track streak from the end
-  let streakType = null; // true = win, false = loss
+  let streakType = null;
   let streakCount = 0;
   let streakDone = false;
 
   for (let i = 0; i < cache.length; i++) {
     const p = cache[i];
     if (!p.settled || p.correct === null) continue;
-
     if (skip > 0) { skip--; continue; }
-
     recentTotal++;
     if (p.correct) recentCorrect++;
   }
 
-  // Streak: walk from end
   for (let i = cache.length - 1; i >= 0 && !streakDone; i--) {
     const p = cache[i];
     if (!p.settled || p.correct === null) continue;
-
-    if (streakType === null) {
-      streakType = p.correct;
-      streakCount = 1;
-    } else if (p.correct === streakType) {
-      streakCount++;
-    } else {
-      streakDone = true;
-    }
+    if (streakType === null) { streakType = p.correct; streakCount = 1; }
+    else if (p.correct === streakType) streakCount++;
+    else streakDone = true;
   }
 
   const accuracy = recentTotal > 0 ? recentCorrect / recentTotal : null;
-  const streak = {
-    type: streakType === null ? 'none' : streakType ? 'win' : 'loss',
-    count: streakCount,
-  };
+  const streak = { type: streakType === null ? 'none' : streakType ? 'win' : 'loss', count: streakCount };
 
-  // Confidence adjustment
-  let confidenceMultiplier;
-  let label;
+  let confidenceMultiplier, label;
   const pct = accuracy !== null ? (accuracy * 100).toFixed(0) : '0';
 
-  if (accuracy >= 0.70) {
-    confidenceMultiplier = 1.15;
-    label = `🔥 Hot (${pct}% of last ${recentTotal})`;
-  } else if (accuracy >= 0.55) {
-    confidenceMultiplier = 1.05;
-    label = `✅ Good (${pct}% of last ${recentTotal})`;
-  } else if (accuracy >= 0.45) {
-    confidenceMultiplier = 1.0;
-    label = `➖ Average (${pct}% of last ${recentTotal})`;
-  } else if (accuracy >= 0.35) {
-    confidenceMultiplier = 0.85;
-    label = `⚠️ Cold (${pct}% of last ${recentTotal})`;
-  } else {
-    confidenceMultiplier = 0.70;
-    label = `❄️ Ice Cold (${pct}% of last ${recentTotal})`;
-  }
+  if (accuracy >= 0.70) { confidenceMultiplier = 1.15; label = `🔥 Hot (${pct}% of last ${recentTotal})`; }
+  else if (accuracy >= 0.55) { confidenceMultiplier = 1.05; label = `✅ Good (${pct}% of last ${recentTotal})`; }
+  else if (accuracy >= 0.45) { confidenceMultiplier = 1.0; label = `➖ Average (${pct}% of last ${recentTotal})`; }
+  else if (accuracy >= 0.35) { confidenceMultiplier = 0.85; label = `⚠️ Cold (${pct}% of last ${recentTotal})`; }
+  else { confidenceMultiplier = 0.70; label = `❄️ Ice Cold (${pct}% of last ${recentTotal})`; }
 
-  // Streak adjustment
-  if (streak.type === 'loss' && streak.count >= 3) {
-    confidenceMultiplier *= 0.90;
-    label += ` | ${streak.count}L streak`;
-  } else if (streak.type === 'win' && streak.count >= 3) {
-    confidenceMultiplier *= 1.05;
-    label += ` | ${streak.count}W streak`;
-  }
+  if (streak.type === 'loss' && streak.count >= 3) { confidenceMultiplier *= 0.90; label += ` | ${streak.count}L streak`; }
+  else if (streak.type === 'win' && streak.count >= 3) { confidenceMultiplier *= 1.05; label += ` | ${streak.count}W streak`; }
 
-  // Clamp
   if (confidenceMultiplier < 0.50) confidenceMultiplier = 0.50;
   else if (confidenceMultiplier > 1.25) confidenceMultiplier = 1.25;
 
@@ -259,7 +355,6 @@ function computeStreakFromCache() {
   for (let i = cache.length - 1; i >= 0; i--) {
     const p = cache[i];
     if (!p.settled || p.correct === null) continue;
-
     const streakType = p.correct;
     let count = 1;
     for (let j = i - 1; j >= 0; j--) {
@@ -273,18 +368,10 @@ function computeStreakFromCache() {
   return { type: 'none', count: 0 };
 }
 
-/**
- * Auto-settle old predictions. Called each poll cycle.
- *
- * v3 optimization: Early-exit if no unsettled predictions exist.
- * Uses in-memory cache — zero JSON.parse per call.
- */
 export function autoSettle(currentSlug, btcPrice, priceToBeat, timeLeftMin) {
   if (timeLeftMin > 0.5) return;
-
   ensureLoaded();
 
-  // ═══ Early exit: check if ANY unsettled predictions exist ═══
   let hasUnsettled = false;
   for (let i = 0; i < cache.length; i++) {
     if (!cache[i].settled) { hasUnsettled = true; break; }
@@ -292,12 +379,10 @@ export function autoSettle(currentSlug, btcPrice, priceToBeat, timeLeftMin) {
   if (!hasUnsettled) return;
 
   let changed = false;
-
   for (let i = 0; i < cache.length; i++) {
     const pred = cache[i];
     if (pred.settled) continue;
 
-    // Settle predictions from PREVIOUS markets
     if (pred.marketSlug && pred.marketSlug !== currentSlug) {
       pred.settled = true;
       pred.correct = null;
@@ -307,7 +392,6 @@ export function autoSettle(currentSlug, btcPrice, priceToBeat, timeLeftMin) {
       continue;
     }
 
-    // Current market at settlement time
     if (priceToBeat !== null && timeLeftMin <= 0.1 && pred.marketSlug === currentSlug) {
       const result = btcPrice >= priceToBeat ? 'UP' : 'DOWN';
       pred.settled = true;
@@ -321,9 +405,6 @@ export function autoSettle(currentSlug, btcPrice, priceToBeat, timeLeftMin) {
   if (changed) markDirty();
 }
 
-/**
- * Force persist now (call on page unload).
- */
 export function flushHistory() {
   if (!dirty || !cache) return;
   clearTimeout(persistTimer);
@@ -335,7 +416,6 @@ export function flushHistory() {
   } catch { /* */ }
 }
 
-// ═══ Persist on page unload to avoid data loss ═══
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', flushHistory);
 }

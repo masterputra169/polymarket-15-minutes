@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { formatNumber, fmtTimeLeft } from '../utils.js';
 
-export default function CurrentPriceCard({
+function CurrentPriceCard({
   chainlinkPrice,
   chainlinkPrevPrice,
   chainlinkConnected,
@@ -51,7 +51,7 @@ export default function CurrentPriceCard({
     diffText = `${sign}$${Math.abs(diffUsd).toFixed(2)} (${sign}${Math.abs(diffPct).toFixed(2)}%)`;
   }
 
-  // ═══ NEW: Price to Beat vs Current Price comparison ═══
+  // ═══ Price to Beat vs Current Price comparison ═══
   let ptbDiffText = '';
   let ptbColor = '';
   if (priceToBeat !== null && displayPrice !== null) {
@@ -157,7 +157,7 @@ export default function CurrentPriceCard({
         </div>
       </div>
 
-      {/* ═══ NEW: Price to Beat Row ═══ */}
+      {/* ═══ Price to Beat Row ═══ */}
       {priceToBeat !== null && (
         <div
           style={{
@@ -259,3 +259,8 @@ export default function CurrentPriceCard({
     </div>
   );
 }
+
+// ═══ React.memo ═══
+// Props are all primitives (number/bool/string/null), so shallow compare is sufficient.
+// No custom comparator needed — React.memo's default === check works perfectly.
+export default memo(CurrentPriceCard);

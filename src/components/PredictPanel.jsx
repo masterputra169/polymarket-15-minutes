@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { formatProbPct } from '../utils.js';
 
-export default function PredictPanel({ data }) {
+function PredictPanel({ data }) {
   if (!data) return null;
 
   const { pLong, pShort, regimeInfo, rec } = data;
@@ -107,3 +107,21 @@ export default function PredictPanel({ data }) {
     </div>
   );
 }
+
+// ═══ React.memo with custom comparator ═══
+// Only re-render when prediction-specific fields change
+export default memo(PredictPanel, (prev, next) => {
+  const a = prev.data;
+  const b = next.data;
+  if (!a || !b) return a === b;
+  return (
+    a.pLong === b.pLong &&
+    a.pShort === b.pShort &&
+    a.regimeInfo?.regime === b.regimeInfo?.regime &&
+    a.rec?.action === b.rec?.action &&
+    a.rec?.side === b.rec?.side &&
+    a.rec?.strength === b.rec?.strength &&
+    a.rec?.phase === b.rec?.phase &&
+    a.rec?.edge === b.rec?.edge
+  );
+});

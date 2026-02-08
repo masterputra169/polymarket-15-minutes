@@ -26,6 +26,7 @@ export async function fetchKlines({ interval = '1m', limit = 240 } = {}) {
     close: parseFloat(k[4]),
     volume: parseFloat(k[5]),
     closeTime: k[6],
+    takerBuyVolume: parseFloat(k[9]), 
   }));
 }
 

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { formatNumber, fmtTimeLeft } from '../utils.js';
 
-export default function PolymarketPanel({ data, clobWsConnected }) {
+function PolymarketPanel({ data, clobWsConnected }) {
   if (!data) return null;
 
   const { poly, marketUp, marketDown, liquidity, settlementLeftMin, clobSource } = data;
@@ -108,3 +108,23 @@ export default function PolymarketPanel({ data, clobWsConnected }) {
     </div>
   );
 }
+
+// ═══ React.memo with custom comparator ═══
+// Only re-render when Polymarket-specific fields change
+export default memo(PolymarketPanel, (prev, next) => {
+  const a = prev.data;
+  const b = next.data;
+  if (!a || !b) return a === b;
+  return (
+    prev.clobWsConnected === next.clobWsConnected &&
+    a.poly?.ok === b.poly?.ok &&
+    a.poly?.reason === b.poly?.reason &&
+    a.poly?.market?.question === b.poly?.market?.question &&
+    a.poly?.market?.slug === b.poly?.market?.slug &&
+    a.marketUp === b.marketUp &&
+    a.marketDown === b.marketDown &&
+    a.liquidity === b.liquidity &&
+    a.settlementLeftMin === b.settlementLeftMin &&
+    a.clobSource === b.clobSource
+  );
+});

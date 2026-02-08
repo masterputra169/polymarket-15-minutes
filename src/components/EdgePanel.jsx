@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { formatProbPct } from '../utils.js';
 
-export default function EdgePanel({ data }) {
+function EdgePanel({ data }) {
   if (!data) return null;
 
   const { edge, pLong, pShort, marketUp, marketDown } = data;
@@ -59,3 +59,19 @@ export default function EdgePanel({ data }) {
     </div>
   );
 }
+
+// ═══ React.memo with custom comparator ═══
+// Only re-render when edge-specific fields change
+export default memo(EdgePanel, (prev, next) => {
+  const a = prev.data;
+  const b = next.data;
+  if (!a || !b) return a === b;
+  return (
+    a.edge?.edgeUp === b.edge?.edgeUp &&
+    a.edge?.edgeDown === b.edge?.edgeDown &&
+    a.pLong === b.pLong &&
+    a.pShort === b.pShort &&
+    a.marketUp === b.marketUp &&
+    a.marketDown === b.marketDown
+  );
+});

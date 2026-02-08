@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { formatProbPct } from '../utils.js';
 
-export default function MLPanel({ data }) {
+function MLPanel({ data }) {
   if (!data) return null;
 
   const { ml, pLong, pShort, rawUp } = data;
@@ -367,3 +367,22 @@ export default function MLPanel({ data }) {
     </div>
   );
 }
+
+// ═══ React.memo with custom comparator ═══
+// Only re-render when ML-specific fields change
+export default memo(MLPanel, (prev, next) => {
+  const a = prev.data;
+  const b = next.data;
+  if (!a || !b) return a === b;
+  return (
+    a.ml?.probUp === b.ml?.probUp &&
+    a.ml?.confidence === b.ml?.confidence &&
+    a.ml?.side === b.ml?.side &&
+    a.ml?.ensembleProbUp === b.ml?.ensembleProbUp &&
+    a.ml?.alpha === b.ml?.alpha &&
+    a.ml?.source === b.ml?.source &&
+    a.ml?.status === b.ml?.status &&
+    a.pLong === b.pLong &&
+    a.pShort === b.pShort
+  );
+});

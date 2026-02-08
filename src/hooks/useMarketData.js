@@ -7,13 +7,19 @@ import { computeSessionVwap, computeVwapSeries } from '../indicators/vwap.js';
 import { computeRsi, computeRsiSeries, sma, slopeLast } from '../indicators/rsi.js';
 import { computeMacd } from '../indicators/macd.js';
 import { computeHeikenAshi, countConsecutive } from '../indicators/heikenAshi.js';
+import { computeBollingerBands } from '../indicators/bollinger.js';
+import { computeATR } from '../indicators/atr.js';
+import { computeVolumeDelta } from '../indicators/volumedelta.js';
+import { computeEmaCrossover } from '../indicators/emacross.js';
+import { computeStochRsi } from '../indicators/stochrsi.js';
+import { fetchFundingRate } from '../indicators/fundingrate.js';
 import { detectRegime } from '../engines/regime.js';
 import { scoreDirection, applyTimeAwareness } from '../engines/probability.js';
 import { computeEdge, decide } from '../engines/edge.js';
 import { analyzeOrderbook } from '../engines/orderbook.js';
 import { getVolatilityProfile, computeRealizedVol } from '../engines/volatility.js';
 import { computeMultiTfConfirmation } from '../engines/multitf.js';
-import { getAccuracyStats, recordPrediction, autoSettle } from '../engines/feedback.js';
+import { getAccuracyStats, recordPrediction, autoSettle, onMarketSwitch } from '../engines/feedback.js';
 import { loadMLModel, getMLPrediction, getMLStatus } from '../engines/Mlpredictor.js';
 import {
   getCandleWindowTiming,
@@ -186,17 +192,29 @@ export function useMarketData({ clobWs } = {}) {
         currentMarketSlugRef.current !== marketSlug;
 
       if (slugChanged) {
-        if (IS_DEV) console.log(`[Market] 🔄 Switched: "${currentMarketSlugRef.current}" → "${marketSlug}"`);
-        tokenIdsNotifiedRef.current = false;
-        priceToBeatRef.current = { slug: null, value: null };
-        window.__ptbLogged = false;
+        const oldSlug = currentMarketSlugRef.current;
+        if (IS_DEV) console.log(`[Market] 🔄 Switched: "${oldSlug}" → "${marketSlug}"`);
 
+        // ═══ FULL CLEANUP: Clear ALL stale market data ═══
+
+        // 1. Core cache invalidation (polySnapshot, polyLastFetch, endMs, PTB)
+        invalidateMarketCache();
+
+        // 2. Feedback: settle old predictions + purge stale slugs
+        onMarketSwitch(oldSlug, marketSlug);
+
+        // 3. Previous data ref: prevent stale comparisons
+        prevDataRef.current = null;
+
+        // 4. Reset poll counter (fresh market = fresh cycle)
+        pollCountRef.current = 0;
+
+        // 5. CLOB WS: force fresh connection with new tokens
         if (poly.ok && poly.tokens && clobWs?.setTokenIds) {
           if (IS_DEV) console.log('[Market] 📡 Re-subscribing CLOB WS...');
           clobWs.setTokenIds(poly.tokens.upTokenId, poly.tokens.downTokenId);
           tokenIdsNotifiedRef.current = true;
         }
-        polySnapshotRef.current = null;
       }
 
       if (marketSlug) currentMarketSlugRef.current = marketSlug;
@@ -226,6 +244,23 @@ export function useMarketData({ clobWs } = {}) {
       const consec = countConsecutive(ha);
 
       const vwapCrossCount = countVwapCrosses(closes, vwapSeries, 20);
+
+      // ═══ Bollinger Bands + ATR ═══
+      const bb = computeBollingerBands(closes, 20, 2);
+      const atr = computeATR(candles, 14);
+
+      // ═══ Volume Delta (buy/sell pressure) ═══
+      const volDelta = computeVolumeDelta(candles, 10, 20);
+
+      // ═══ EMA 8/21 Crossover ═══
+      const emaCross = computeEmaCrossover(closes, 8, 21);
+
+      // ═══ Stochastic RSI ═══
+      const stochRsi = computeStochRsi(closes, 14, 14, 3, 3);
+
+      // ═══ Funding Rate (async, cached 5min) ═══
+      let fundingRate = null;
+      try { fundingRate = await fetchFundingRate(); } catch { /* silent */ }
 
       // ═══ MEMORY FIX 4: compute volume with loop instead of slice+reduce ═══
       let volumeRecent = 0;
@@ -303,6 +338,7 @@ export function useMarketData({ clobWs } = {}) {
         macd, heikenColor: consec.color, heikenCount: consec.count,
         failedVwapReclaim, delta1m, delta3m, regime: regimeInfo,
         orderbookSignal, volProfile, multiTfConfirm, feedbackStats,
+        bb, atr,
       });
 
       // Settlement timing
@@ -344,6 +380,17 @@ export function useMarketData({ clobWs } = {}) {
         bestEdge: Math.max(edge.edgeUp ?? 0, edge.edgeDown ?? 0),
         vwapCrossCount, multiTfAgreement: multiTfConfirm?.agreement ?? false,
         failedVwapReclaim,
+        bbWidth: bb?.width ?? null, bbPercentB: bb?.percentB ?? null,
+        bbSqueeze: bb?.squeeze ?? false, bbSqueezeIntensity: bb?.squeezeIntensity ?? 0,
+        atrPct: atr?.atrPct ?? null, atrRatio: atr?.atrRatio ?? null,
+        volDeltaBuyRatio: volDelta?.buyRatio ?? null,
+        volDeltaAccel: volDelta?.deltaAccel ?? null,
+        emaDistPct: emaCross?.distancePct ?? null,
+        emaCrossSignal: emaCross?.cross === 'BULL_CROSS' ? 1 : emaCross?.cross === 'BEAR_CROSS' ? -1 : 0,
+        stochK: stochRsi?.k ?? null,
+        stochKD: stochRsi ? (stochRsi.k - stochRsi.d) : null,
+        fundingRatePct: fundingRate?.ratePct ?? null,
+        fundingSentiment: fundingRate?.sentiment ?? 'NEUTRAL',
       }, timeAware.adjustedUp);
 
       // Feedback
@@ -432,6 +479,18 @@ export function useMarketData({ clobWs } = {}) {
         realizedVol,
         multiTfConfirm,
         feedbackStats,
+        bb,
+        atr,
+        volDelta,
+        emaCross,
+        stochRsi,
+        fundingRate,
+        // ═══ Hidden features now exposed for UI ═══
+        volumeRecent,
+        volumeAvg,
+        volumeRatio: volumeAvg > 0 ? volumeRecent / volumeAvg : 1,
+        vwapCrossCount,
+        failedVwapReclaim,
         ml: mlResult.available ? {
           probUp: mlResult.mlProbUp,
           confidence: mlResult.mlConfidence,

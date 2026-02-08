@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { useBinanceStream } from './hooks/useBinanceStream.js';
 import { usePolymarketChainlinkStream } from './hooks/usePolymarketChainlinkStream.js';
 import { useChainlinkWssStream } from './hooks/useChainlinkWssStream.js';
@@ -12,7 +12,8 @@ import EdgePanel from './components/EdgePanel.jsx';
 import MLPanel from './components/MlPanel.jsx';
 import SessionInfo from './components/SessionInfo.jsx';
 
-function StatusDot({ connected, label }) {
+// ═══ React.memo: StatusDot only re-renders when connected/label changes ═══
+const StatusDot = memo(function StatusDot({ connected, label }) {
   const cls = connected ? '' : 'status-dot--error';
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
@@ -20,7 +21,7 @@ function StatusDot({ connected, label }) {
       <span>{label}</span>
     </span>
   );
-}
+});
 
 export default function App() {
   // Data sources
@@ -71,6 +72,171 @@ export default function App() {
   const chainlinkConnected =
     polymarketWs.connected || chainlinkWss.connected || (data?.chainlinkRpc?.price != null);
 
+  // ═══════════════════════════════════════════════════════════════
+  // useMemo DATA SLICING — stable references for child components
+  // Each child only re-renders when ITS specific data changes
+  // ═══════════════════════════════════════════════════════════════
+
+  // Header status deps
+  const mlStatus = data?.ml?.status;
+  const hasError = !!error;
+
+  // CurrentPriceCard: only binance + chainlink + timer
+  const priceCardProps = useMemo(() => ({
+    chainlinkPrice: chainlinkResolved.price,
+    chainlinkPrevPrice: chainlinkResolved.prevPrice,
+    chainlinkConnected,
+    chainlinkSource: chainlinkResolved.source,
+    binancePrice: binance.price ?? data?.lastPrice,
+    binancePrevPrice: binance.prevPrice,
+    binanceConnected: binance.connected,
+    timeLeftMin: data?.timeLeftMin,
+    priceToBeat: data?.priceToBeat,
+  }), [
+    chainlinkResolved.price, chainlinkResolved.prevPrice,
+    chainlinkConnected, chainlinkResolved.source,
+    binance.price, binance.prevPrice, binance.connected,
+    data?.lastPrice, data?.timeLeftMin, data?.priceToBeat,
+  ]);
+
+  // PredictPanel: probability, recommendation, score
+  const predictData = useMemo(() => {
+    if (!data) return null;
+    return {
+      pLong: data.pLong,
+      pShort: data.pShort,
+      rawUp: data.rawUp,
+      rawDown: data.rawDown,
+      rec: data.rec,
+      edge: data.edge,
+      timeDecay: data.timeDecay,
+      scoreBreakdown: data.scoreBreakdown,
+      regimeInfo: data.regimeInfo,
+      feedbackStats: data.feedbackStats,
+      haNarrative: data.haNarrative,
+      rsiNarrative: data.rsiNarrative,
+      macdNarrative: data.macdNarrative,
+      vwapNarrative: data.vwapNarrative,
+      timing: data.timing,
+      consec: data.consec,
+    };
+  }, [
+    data?.pLong, data?.pShort, data?.rawUp, data?.rawDown,
+    data?.rec, data?.edge, data?.timeDecay,
+    data?.scoreBreakdown, data?.regimeInfo, data?.feedbackStats,
+    data?.haNarrative, data?.rsiNarrative, data?.macdNarrative, data?.vwapNarrative,
+    data?.timing, data?.consec,
+  ]);
+
+  // TAIndicators: RSI, MACD, VWAP, HA, BB, ATR, EMA, VolDelta, StochRSI, Funding, Hidden
+  const taData = useMemo(() => {
+    if (!data) return null;
+    return {
+      rsiNow: data.rsiNow,
+      rsiSlope: data.rsiSlope,
+      rsiNarrative: data.rsiNarrative,
+      macd: data.macd,
+      macdLabel: data.macdLabel,
+      macdNarrative: data.macdNarrative,
+      vwapNow: data.vwapNow,
+      vwapDist: data.vwapDist,
+      vwapSlope: data.vwapSlope,
+      vwapSlopeLabel: data.vwapSlopeLabel,
+      vwapNarrative: data.vwapNarrative,
+      consec: data.consec,
+      haNarrative: data.haNarrative,
+      delta1m: data.delta1m,
+      delta3m: data.delta3m,
+      lastClose: data.lastClose,
+      realizedVol: data.realizedVol,
+      volProfile: data.volProfile,
+      multiTfConfirm: data.multiTfConfirm,
+      regimeInfo: data.regimeInfo,
+      bb: data.bb,
+      atr: data.atr,
+      // New indicators
+      volDelta: data.volDelta,
+      emaCross: data.emaCross,
+      stochRsi: data.stochRsi,
+      fundingRate: data.fundingRate,
+      // Hidden features exposed
+      volumeRatio: data.volumeRatio,
+      vwapCrossCount: data.vwapCrossCount,
+      failedVwapReclaim: data.failedVwapReclaim,
+    };
+  }, [
+    data?.rsiNow, data?.rsiSlope, data?.rsiNarrative,
+    data?.macd, data?.macdLabel, data?.macdNarrative,
+    data?.vwapNow, data?.vwapDist, data?.vwapSlope, data?.vwapSlopeLabel, data?.vwapNarrative,
+    data?.consec, data?.haNarrative,
+    data?.delta1m, data?.delta3m, data?.lastClose,
+    data?.realizedVol, data?.volProfile, data?.multiTfConfirm, data?.regimeInfo,
+    data?.bb?.width, data?.bb?.percentB, data?.bb?.squeeze,
+    data?.atr?.atr, data?.atr?.atrRatio,
+    // New indicators
+    data?.volDelta?.buyRatio, data?.volDelta?.netDeltaPct,
+    data?.emaCross?.distancePct, data?.emaCross?.cross,
+    data?.stochRsi?.k, data?.stochRsi?.d,
+    data?.fundingRate?.ratePct,
+    // Hidden features
+    data?.volumeRatio, data?.vwapCrossCount, data?.failedVwapReclaim,
+  ]);
+
+  // PolymarketPanel: market prices, orderbook, CLOB
+  const polyData = useMemo(() => {
+    if (!data) return null;
+    return {
+      poly: data.poly,
+      marketUp: data.marketUp,
+      marketDown: data.marketDown,
+      marketSlug: data.marketSlug,
+      liquidity: data.liquidity,
+      orderbookUp: data.orderbookUp,
+      orderbookDown: data.orderbookDown,
+      orderbookSignal: data.orderbookSignal,
+      clobSource: data.clobSource,
+      clobWsConnected: data.clobWsConnected,
+      priceToBeat: data.priceToBeat,
+      marketQuestion: data.marketQuestion,
+      settlementLeftMin: data.settlementLeftMin,
+    };
+  }, [
+    data?.poly?.ok, data?.poly?.reason, data?.poly?.market?.question, data?.poly?.market?.slug,
+    data?.marketUp, data?.marketDown, data?.marketSlug, data?.liquidity,
+    data?.orderbookUp, data?.orderbookDown, data?.orderbookSignal,
+    data?.clobSource, data?.clobWsConnected,
+    data?.priceToBeat, data?.marketQuestion, data?.settlementLeftMin,
+  ]);
+
+  // EdgePanel: edge, recommendation
+  const edgeData = useMemo(() => {
+    if (!data) return null;
+    return {
+      edge: data.edge,
+      rec: data.rec,
+      pLong: data.pLong,
+      pShort: data.pShort,
+      marketUp: data.marketUp,
+      marketDown: data.marketDown,
+      timeLeftMin: data.timeLeftMin,
+      feedbackStats: data.feedbackStats,
+    };
+  }, [
+    data?.edge, data?.rec, data?.pLong, data?.pShort,
+    data?.marketUp, data?.marketDown, data?.timeLeftMin, data?.feedbackStats,
+  ]);
+
+  // MLPanel: ML-specific + rule prob
+  const mlData = useMemo(() => {
+    if (!data) return null;
+    return {
+      ml: data.ml,
+      pLong: data.pLong,
+      pShort: data.pShort,
+      rawUp: data.rawUp,
+    };
+  }, [data?.ml, data?.pLong, data?.pShort, data?.rawUp]);
+
   return (
     <div className="app-container">
       {/* Header */}
@@ -86,9 +252,9 @@ export default function App() {
           <span style={{ color: 'var(--text-dim)' }}>|</span>
           <StatusDot connected={clobWs.connected} label={`CLOB ${clobWs.connected ? 'WS' : 'REST'}`} />
           <span style={{ color: 'var(--text-dim)' }}>|</span>
-          <StatusDot connected={data?.ml?.status === 'ready'} label="ML" />
+          <StatusDot connected={mlStatus === 'ready'} label="ML" />
           <span style={{ color: 'var(--text-dim)' }}>|</span>
-          <StatusDot connected={!error} label="Data" />
+          <StatusDot connected={!hasError} label="Data" />
         </div>
       </header>
 
@@ -118,28 +284,18 @@ export default function App() {
       {data && (
         <div className="dashboard-grid">
           {/* Row 1: Price + Timer (full width) */}
-          <CurrentPriceCard
-            chainlinkPrice={chainlinkResolved.price}
-            chainlinkPrevPrice={chainlinkResolved.prevPrice}
-            chainlinkConnected={chainlinkConnected}
-            chainlinkSource={chainlinkResolved.source}
-            binancePrice={binance.price ?? data.lastPrice}
-            binancePrevPrice={binance.prevPrice}
-            binanceConnected={binance.connected}
-            timeLeftMin={data.timeLeftMin}
-            priceToBeat={data.priceToBeat}
-          />
+          <CurrentPriceCard {...priceCardProps} />
 
           {/* Row 2: Prediction + TA */}
-          <PredictPanel data={data} />
-          <TAIndicators data={data} />
+          <PredictPanel data={predictData} />
+          <TAIndicators data={taData} />
 
           {/* Row 3: Polymarket + Edge */}
-          <PolymarketPanel data={data} clobWsConnected={clobWs.connected} />
-          <EdgePanel data={data} />
+          <PolymarketPanel data={polyData} clobWsConnected={clobWs.connected} />
+          <EdgePanel data={edgeData} />
 
           {/* Row 4: ML Engine (full width) */}
-          <MLPanel data={data} />
+          <MLPanel data={mlData} />
 
           {/* Row 5: Session (full width) */}
           <SessionInfo />

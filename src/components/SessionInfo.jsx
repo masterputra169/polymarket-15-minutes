@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { fmtEtTime, getBtcSession } from '../utils.js';
 import { useClock } from '../hooks/useClock.js';
 
-export default function SessionInfo() {
+function SessionInfo() {
   const now = useClock(1000);
 
   const etTime = fmtEtTime(now);
@@ -50,3 +50,8 @@ export default function SessionInfo() {
     </div>
   );
 }
+
+// ═══ React.memo ═══
+// No props — memo prevents re-render from parent (App) re-renders.
+// Internal useClock hook handles its own 1s tick independently.
+export default memo(SessionInfo);

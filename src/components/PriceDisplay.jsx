@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { formatNumber } from '../utils.js';
 
-export default function PriceDisplay({ label, price, prevPrice, decimals = 2, prefix = '$' }) {
+function PriceDisplay({ label, price, prevPrice, decimals = 2, prefix = '$' }) {
   const ref = useRef(null);
   const prevRef = useRef(price);
 
@@ -45,3 +45,7 @@ export default function PriceDisplay({ label, price, prevPrice, decimals = 2, pr
     </div>
   );
 }
+
+// ═══ React.memo ═══
+// Props are all primitives — default shallow compare is sufficient.
+export default memo(PriceDisplay);
